@@ -1,0 +1,85 @@
+{
+  "generated": "2026-11-11",
+  "skills": [
+    "square_numbers",
+    "square_roots",
+    "identify_hyp",
+    "theorem_setup",
+    "solve_hyp",
+    "solve_leg",
+    "word_problems"
+  ],
+  "within_range": {
+    "criterion": {
+      "mean_mastery": 0.03,
+      "bottom_quartile_mastery": 0.05,
+      "retention": 0.03,
+      "opportunities_per_skill": 1.0
+    },
+    "syn_tuned": {
+      "ft_thr": 0.92,
+      "scaf_thr": 0.75
+    },
+    "real_tuned": {
+      "ft_thr": 0.7,
+      "scaf_thr": 0.8
+    },
+    "eval_syn": {
+      "ft_rate": 0.053246753246753244,
+      "scaf_rate": 0.5506493506493506,
+      "mean_mastery": 0.7410901043761494,
+      "bottom_quartile_mastery": 0.6219534891464931,
+      "retention": 0.5498108495826349,
+      "opportunities_per_skill": 10.800649350649351,
+      "n_students": 220
+    },
+    "eval_real": {
+      "ft_rate": 0.08961038961038961,
+      "scaf_rate": 0.4831168831168831,
+      "mean_mastery": 0.7440363267398652,
+      "bottom_quartile_mastery": 0.6360761436118417,
+      "retention": 0.5522291245969183,
+      "opportunities_per_skill": 10.651948051948052,
+      "n_students": 220
+    },
+    "deltas": {
+      "mean_mastery": 0.002946222363715778,
+      "bottom_quartile_mastery": 0.01412265446534866,
+      "retention": 0.0024182750142833775,
+      "opportunities_per_skill": 0.14870129870129922
+    },
+    "passed": {
+      "mean_mastery": true,
+      "bottom_quartile_mastery": true,
+      "retention": true,
+      "opportunities_per_skill": true
+    },
+    "overall_pass": true
+  },
+  "transfer": {
+    "tuned_scaf": 0.75,
+    "improved_scaf": 0.7,
+    "syn_before": 0.8774521831076348,
+    "syn_after": 0.8901194615874236,
+    "real_before": 0.6297363750766798,
+    "real_after": 0.6408817170359679,
+    "syn_gain": 0.012667278479788768,
+    "real_gain": 0.011145341959288069,
+    "transfers": true
+  },
+  "aggregate_feedback": {
+    "real_ft_rate": 0.045584415584415595,
+    "recovered_shift": 0.5499999999999999,
+    "true_shift": 0.6,
+    "n_aggregates_used": 1
+  },
+  "caveat": {
+    "recovered_shift": 0.5499999999999999,
+    "syn_mean_mastery": 0.7796531096523336,
+    "real_mean_mastery": 0.7601127913425448,
+    "mastery_gap": 0.01954031830978875,
+    "syn_retention": 0.6055900157068819,
+    "real_retention": 0.565004202991267,
+    "retention_gap": 0.0405858127156149
+  }
+}

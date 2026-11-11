@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype 3 — Synthetic Student Tuning</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+    max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; color: #1b2330;
+    background: #fbfcfe; line-height: 1.55; }
+  h1 { font-size: 1.7rem; margin-bottom: 4px; }
+  .sub { color: #6b7280; margin-top: 0; }
+  .verdict { display:inline-block; font-weight:700; color:#fff; background:#2e8b64;
+    padding:3px 12px; border-radius:999px; font-size:.95rem; }
+  h2 { margin-top: 2.2rem; border-bottom: 2px solid #eef1f5; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size:.95rem; }
+  th,td { text-align:left; padding:7px 10px; border-bottom:1px solid #e6e9ef; }
+  th { color:#6b7280; font-weight:600; }
+  figure { margin: 18px 0; }
+  img { max-width: 100%; border:1px solid #e6e9ef; border-radius:10px; }
+  figcaption { color:#6b7280; font-size:.88rem; margin-top:6px; }
+  .kpis { display:flex; flex-wrap:wrap; gap:12px; margin:14px 0; }
+  .kpi { flex:1 1 150px; background:#fff; border:1px solid #e6e9ef; border-radius:12px;
+    padding:12px 14px; }
+  .kpi b { display:block; font-size:1.5rem; }
+  .kpi span { color:#6b7280; font-size:.82rem; }
+  code { background:#f0f2f6; padding:1px 5px; border-radius:5px; }
+  blockquote { border-left:4px solid #d98c2b; margin:14px 0; padding:4px 16px;
+    background:#fff8ef; color:#4a3a22; border-radius:0 8px 8px 0; }
+</style></head><body>
+<h1>Prototype 3 — Synthetic Student Tuning</h1>
+<p class="sub">ACE is developed and calibrated on <b>simulated</b> middle schoolers.
+Real student data is needed only for low-volume aggregate validation — never for
+model development. <i>Generated 2026-11-11; no real student data used.</i></p>
+
+<div class="kpis">
+  <div class="kpi"><b style="color:#2e8b64">PASS</b><span>within-range test</span></div>
+  <div class="kpi"><b>0.55</b><span>difficulty recovered from 1 number (true 0.60)</span></div>
+  <div class="kpi"><b>+0.011</b><span>real strugglers gained from a synthetic fix</span></div>
+  <div class="kpi"><b>0.041</b><span>retention blind spot (the caveat)</span></div>
+</div>
+
+<h2>Test 1 — Within range <span class="verdict">PASS</span></h2>
+<p>Both engines tuned to the same design-intent firing rates, then both evaluated
+on the real cohort. Synthetic-tuned thresholds: fast-track
+<code>0.92</code>, scaffold <code>0.75</code>.
+Real-tuned: fast-track <code>0.70</code>, scaffold
+<code>0.80</code>.</p>
+<table><thead><tr><th>aggregate outcome</th><th>synthetic-tuned</th><th>real-tuned</th>
+<th>Δ</th><th>tolerance</th><th>verdict</th></tr></thead><tbody><tr><td>mean_mastery</td><td>0.741</td><td>0.744</td><td>0.003</td><td>±0.03</td><td style='color:#2e8b64'>within range</td></tr><tr><td>bottom_quartile_mastery</td><td>0.622</td><td>0.636</td><td>0.014</td><td>±0.05</td><td style='color:#2e8b64'>within range</td></tr><tr><td>retention</td><td>0.550</td><td>0.552</td><td>0.002</td><td>±0.03</td><td style='color:#2e8b64'>within range</td></tr><tr><td>opportunities_per_skill</td><td>10.801</td><td>10.652</td><td>0.149</td><td>±1</td><td style='color:#2e8b64'>within range</td></tr></tbody></table>
+<figure><img src="../figures/01_population.png" alt="Synthetic learner population vs. the stand-in real cohort (5 parameters each)."/><figcaption>Synthetic learner population vs. the stand-in real cohort (5 parameters each).</figcaption></figure>
+<figure><img src="../figures/02_calibration_fasttrack.png" alt="Fast-track calibration: firing rate vs. mastery threshold; the green ring is the chosen value."/><figcaption>Fast-track calibration: firing rate vs. mastery threshold; the green ring is the chosen value.</figcaption></figure>
+<figure><img src="../figures/03_calibration_scaffold.png" alt="Scaffold calibration: firing rate vs. struggle threshold."/><figcaption>Scaffold calibration: firing rate vs. struggle threshold.</figcaption></figure>
+<figure><img src="../figures/04_within_range.png" alt="Both engines on the real cohort; synthetic-tuned stays within range on every outcome."/><figcaption>Both engines on the real cohort; synthetic-tuned stays within range on every outcome.</figcaption></figure>
+
+<h2>Test 2 — Transfer</h2>
+<p>A scaffold improvement found purely on synthetic data
+(<code>0.75</code> → <code>0.70</code>, chosen to lift
+strugglers within a 40% intervention budget) also lifts the real cohort's
+bottom-quartile mastery — no individual record left the district. Transfers:
+<b>True</b>.</p>
+<figure><img src="../figures/05_transfer.png" alt="Bottom-quartile mastery before/after the improvement, on both cohorts."/><figcaption>Bottom-quartile mastery before/after the improvement, on both cohorts.</figcaption></figure>
+
+<h2>Test 3 — Aggregate-only feedback</h2>
+<p>The only real-world input was one number: the real cohort's fast-track rate
+= <code>0.046</code>. Feeding it back recovered a difficulty shift of
+<code>0.55</code> (true <code>0.60</code>).</p>
+<figure><img src="../figures/06_aggregate_feedback.png" alt="One cohort-level number re-grounds the synthetic population."/><figcaption>One cohort-level number re-grounds the synthetic population.</figcaption></figure>
+
+<h2>Caveat</h2>
+<blockquote>A synthetic population tuned to match real aggregates can still be wrong
+about individuals in ways that only show up in real classrooms. The stand-in real
+cohort's high-forgetting tail is invisible to the matched aggregate — the retention
+gap (0.041) is larger than the mastery gap (0.020).
+That is why the two streams validate each other rather than one replacing the other.</blockquote>
+<figure><img src="../figures/07_caveat_retention.png" alt="Matching an aggregate is not being right about individuals: the retention blind spot."/><figcaption>Matching an aggregate is not being right about individuals: the retention blind spot.</figcaption></figure>
+
+<p class="sub">Parameters grounded in Corbett &amp; Anderson (1995, BKT),
+Newell &amp; Rosenbloom (1981, power law of practice), Aleven et al. (2006, help-seeking),
+and Ebbinghaus / Pavlik &amp; Anderson (2005, memory decay).</p>
+</body></html>
