@@ -1,6 +1,6 @@
 # Deploy the Synthetic Persona Lab → questsim.persyna.com
 
-This folder deploys [`persona-lab/`](../../persona-lab/) as a **static site on
+This folder deploys the Persona Lab (repo root `index.html`) as a **static site on
 Cloudflare Workers** (Static Assets — no Worker script, no build step), served
 at **https://questsim.persyna.com**. The page is the single `public/index.html`.
 
@@ -36,7 +36,7 @@ https://questsim.persyna.com
 
 Cloudflare provisions the DNS record and TLS certificate automatically (usually
 live within a minute or two). Re-run `npm run deploy` any time to push an
-update — it re-copies the latest `persona-lab/index.html` first, so there's one
+update — it re-copies the latest root `index.html` first, so there's one
 source of truth. A `questsim-persyna.<your-subdomain>.workers.dev` URL also
 works as a fallback.
 

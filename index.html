@@ -2,246 +2,960 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wicked Problem Prototypes — QuestSim</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Synthetic Persona Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+  /* Layout: a tabbed lab — sticky header + rail of tools, each a worktable of controls on the left and results on the right. */
   :root {
-    --bg: #f4f6fa;
+    --bg: #f5f6f9;
     --surface: #ffffff;
-    --ink: #1b2330;
-    --ink-soft: #566075;
-    --ink-faint: #8a93a6;
-    --line: #e4e8ef;
-    --brand: #2f6fb0;
-    --brand-soft: #eaf2fb;
-    --good: #2e8b64;
-    --good-soft: #e7f4ee;
-    --amber: #d98c2b;
-    --amber-soft: #fbf1e3;
-    --purple: #8a5cd0;
-    --radius: 16px;
-    --radius-sm: 10px;
+    --surface-2: #eef1f6;
+    --ink: #191d26;
+    --ink-soft: #545c6b;
+    --ink-faint: #8891a1;
+    --line: #e2e6ee;
+    --accent: #4863d4;        /* indigo — the one bold hue */
+    --accent-ink: #ffffff;
+    --accent-soft: #e9edfb;
+    --good: #1f9d6b;
+    --good-soft: #e3f4ec;
+    --warn: #c9811f;
+    --warn-soft: #f9efdd;
+    --bad: #c5443f;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --display: "Space Grotesk", var(--sans);
+    --radius: 14px;
+    --radius-sm: 9px;
+    color-scheme: light;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1218; --surface: #171b24; --surface-2: #1e2430; --ink: #e7eaf1;
+      --ink-soft: #a3abbb; --ink-faint: #6b7486; --line: #2a3140;
+      --accent: #7f97ff; --accent-ink: #0f1218; --accent-soft: #212a44;
+      --good: #4fc693; --good-soft: #15291f; --warn: #e0a955; --warn-soft: #2a2213;
+      --bad: #f0756f; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1218; --surface: #171b24; --surface-2: #1e2430; --ink: #e7eaf1;
+    --ink-soft: #a3abbb; --ink-faint: #6b7486; --line: #2a3140;
+    --accent: #7f97ff; --accent-ink: #0f1218; --accent-soft: #212a44;
+    --good: #4fc693; --good-soft: #15291f; --warn: #e0a955; --warn-soft: #2a2213;
+    --bad: #f0756f; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
   body {
-    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg); color: var(--ink); line-height: 1.55;
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--brand); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 20px 80px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
+  a { color: var(--accent); }
+  .tnum { font-variant-numeric: tabular-nums; }
 
-  .topbar {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 30px;
+  .gutter { padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+
+  /* Header */
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); }
+  header {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15;
+    background: var(--surface); border-bottom: 1px solid var(--line);
   }
-  .logo {
-    width: 34px; height: 34px; border-radius: 9px; flex: none;
-    background: linear-gradient(135deg, #2f6fb0, #5aa0e0);
-    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 17px;
-  }
-  .topbar .name { font-weight: 700; font-size: 15px; }
-  .topbar .name span { color: var(--ink-faint); font-weight: 500; }
-  .topbar .repo { margin-left: auto; font-size: 13px; }
+  .head-row { display: flex; align-items: center; gap: 12px; padding-block: 11px; }
+  .logo { width: 30px; height: 30px; border-radius: 8px; flex: none; background: var(--accent);
+    display: grid; place-items: center; color: var(--accent-ink); font-family: var(--display); font-weight: 700; font-size: 16px; }
+  .brand { font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+  .brand small { display: block; font-family: var(--sans); font-weight: 400; font-size: 11.5px; color: var(--ink-faint); letter-spacing: 0; }
+  .head-spacer { margin-left: auto; }
+  .icon-btn { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-soft);
+    width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 15px; display: grid; place-items: center; }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
 
-  .hero { margin-bottom: 14px; }
-  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
-    color: var(--brand); font-weight: 700; margin-bottom: 10px; }
-  h1 { font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 14px; max-width: 20ch; }
-  .lede { font-size: 16px; color: var(--ink-soft); max-width: 72ch; }
-  .lede b { color: var(--ink); }
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; background: none; border: none; border-bottom: 2px solid transparent; color: var(--ink-faint);
+    font-family: var(--sans); font-size: 13.5px; font-weight: 600; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+  .tab:hover { color: var(--ink-soft); }
+  .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 
-  .board-q {
-    margin: 22px 0 30px; padding: 16px 20px; background: var(--surface);
-    border: 1px solid var(--line); border-left: 4px solid var(--brand);
-    border-radius: var(--radius-sm); font-size: 17px; font-weight: 600; color: var(--ink);
-  }
+  main { max-width: 1120px; margin: 0 auto; padding-block: 22px 72px; }
+  .panel[hidden] { display: none !important; }
 
-  /* Two-stream strip */
-  .streams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch;
-    margin-bottom: 36px; background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); overflow: hidden; }
-  .stream { padding: 16px 20px; }
-  .stream h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-  .stream.classroom h3 { color: var(--good); }
-  .stream.engineering h3 { color: var(--amber); }
-  .stream p { font-size: 13.5px; color: var(--ink-soft); }
-  .divider { width: 0; border-left: 2px dashed #d64c4c; position: relative; }
-  .divider span { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(90deg);
-    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    color: #d64c4c; white-space: nowrap; background: var(--surface); padding: 3px 6px; }
+  .lede { color: var(--ink-soft); font-size: 14px; max-width: 70ch; margin: 0 0 18px; }
+  .lede b { color: var(--ink); font-weight: 600; }
 
-  .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
-    color: var(--ink-faint); font-weight: 700; margin-bottom: 14px; }
+  /* Split worktable */
+  .split { display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
 
-  /* Cards */
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .16s, transform .16s; }
-  .card:hover { box-shadow: 0 10px 30px rgba(27,35,48,.08); transform: translateY(-2px); }
-  .thumb { height: 150px; background: #eef2f7; border-bottom: 1px solid var(--line);
-    overflow: hidden; position: relative; }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
-  .thumb .num { position: absolute; top: 10px; left: 10px; width: 26px; height: 26px; border-radius: 7px;
-    background: rgba(15,32,51,.9); color: #fff; font-weight: 800; font-size: 14px;
-    display: grid; place-items: center; }
-  .card-body { padding: 16px 17px 18px; display: flex; flex-direction: column; flex: 1; }
-  .reframes { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700;
-    margin-bottom: 6px; }
-  .card.p1 .reframes { color: var(--brand); }
-  .card.p2 .reframes { color: var(--amber); }
-  .card.p3 .reframes { color: var(--purple); }
-  .card h2 { font-size: 18px; letter-spacing: -0.01em; margin-bottom: 7px; }
-  .card p.desc { font-size: 13.5px; color: var(--ink-soft); flex: 1; }
-  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
-    margin-top: 12px; align-self: flex-start; }
-  .badge.html { background: var(--brand-soft); color: var(--brand); }
-  .badge.py { background: var(--good-soft); color: var(--good); }
-  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  .btn { font-size: 13px; font-weight: 600; padding: 8px 13px; border-radius: 8px;
-    border: 1px solid var(--line); }
-  .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
-  .btn.primary:hover { background: #255a92; text-decoration: none; }
-  .btn.ghost { background: #fff; color: var(--ink-soft); }
-  .btn.ghost:hover { border-color: #c2cede; text-decoration: none; color: var(--ink); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .card-pad { padding: 16px; }
+  .card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin-bottom: 12px; }
 
-  .relate { margin-top: 36px; background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 20px 22px; }
-  .relate h3 { font-size: 16px; margin-bottom: 10px; }
-  .relate ul { list-style: none; display: grid; gap: 9px; }
-  .relate li { position: relative; padding-left: 22px; font-size: 14px; color: var(--ink-soft); }
-  .relate li::before { content: "→"; position: absolute; left: 0; color: var(--brand); font-weight: 700; }
-  .relate li b { color: var(--ink); }
+  /* Controls */
+  .ctrl { margin-bottom: 14px; min-width: 0; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 5px; }
+  .ctrl label b { color: var(--ink); font-family: var(--mono); font-weight: 500; font-size: 12px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+  input[type="number"], input[type="text"], input[type="url"], select, textarea {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    color: var(--ink); font-family: var(--sans); font-size: 13px; padding: 8px 10px; }
+  textarea { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; resize: vertical; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, .tab:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  footer { margin-top: 32px; font-size: 12.5px; color: var(--ink-faint); text-align: center; line-height: 1.7; }
+  .btn { font-family: var(--sans); font-weight: 600; font-size: 13px; border-radius: var(--radius-sm);
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 9px 14px; cursor: pointer; }
+  .btn:hover { border-color: var(--ink-faint); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.sm { padding: 6px 10px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  @media (max-width: 820px) {
-    .cards { grid-template-columns: 1fr; }
-    .streams { grid-template-columns: 1fr; }
-    .divider { width: auto; height: 0; border-left: 0; border-top: 2px dashed #d64c4c; }
-    .divider span { transform: translate(-50%,-50%); }
-    h1 { font-size: 25px; }
-  }
+  /* Stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 11px 13px; }
+  .tile .v { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .tile .k { font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
+
+  /* Histogram grid */
+  .hist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .hist { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px; }
+  .hist .ht { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .hist .hs { font-size: 11px; color: var(--ink-faint); font-family: var(--mono); margin-bottom: 6px; }
+  canvas { display: block; width: 100%; height: auto; }
+
+  table.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.grid th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.grid td { padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  table.grid td input { padding: 5px 7px; font-family: var(--mono); font-size: 12px; }
+  .skill-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 15px; padding: 0 4px; }
+  .skill-del:hover { color: var(--bad); }
+
+  .saved-list { display: flex; flex-direction: column; gap: 6px; }
+  .saved-item { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12.5px; }
+  .saved-item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .saved-item button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 600; padding: 2px 4px; }
+  .saved-item button.x { color: var(--ink-faint); }
+
+  pre.out { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.55; overflow-x: auto; margin: 0; white-space: pre-wrap; word-break: break-word; min-height: 60px; }
+  pre.out .err { color: var(--bad); }
+  .muted { color: var(--ink-faint); font-size: 12.5px; }
+  code.inl { font-family: var(--mono); font-size: 0.92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+  .note { background: var(--accent-soft); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); padding: 11px 13px; font-size: 12.5px; color: var(--ink-soft); }
+  .note b { color: var(--ink); }
+
+  .bars { display: flex; flex-direction: column; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 48px; gap: 10px; align-items: center; font-size: 12.5px; }
+  .bar-track { background: var(--surface-2); border-radius: 999px; height: 16px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+  .bar-row .bval { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink-soft); }
+  .bar-row .blab { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  iframe.game { width: 100%; height: 340px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
+
+  .foot { margin-top: 26px; color: var(--ink-faint); font-size: 12px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  .seg button { background: var(--surface); border: none; color: var(--ink-soft); font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <div class="topbar">
-    <div class="logo">Q</div>
-    <div class="name">QuestSim <span>· Wicked Problem Prototypes</span></div>
-    <a class="repo" href="https://github.com/lin564/synthetic-student">View on GitHub ↗</a>
+<header>
+  <div class="gutter head-row">
+    <div class="logo">P</div>
+    <div class="brand">Synthetic Persona Lab<small>Test educational apps against a simulated student population — all in the browser</small></div>
+    <div class="head-spacer"></div>
+    <a class="icon-btn" href="overview.html" title="About — the three prototypes" style="width:auto; padding:0 13px; font-size:13px; font-weight:600; text-decoration:none;">About</a>
+    <button class="icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle light/dark">◐</button>
   </div>
-
-  <div class="hero">
-    <div class="eyebrow">Personalization without the data districts can't defend</div>
-    <h1>Three prototypes for one wicked problem</h1>
-    <p class="lede">
-      QuestSim's adaptive engine (<b>ACE</b>) gets better the more fine-grained the data it sees.
-      COPPA, FERPA, and the districts that enforce them push the other way. Solving for
-      personalization makes the privacy problem harder; solving for privacy degrades
-      personalization — so there's no optimum, only a position each district sets.
-    </p>
-  </div>
-
-  <div class="board-q">
-    How might we personalize learning without collecting the data districts can't defend?
-  </div>
-
-  <div class="streams">
-    <div class="stream classroom">
-      <h3>Classroom stream</h3>
-      <p>What <i>this child</i> did today. Written into the district's own Google Workspace,
-         owned by the district, never stored by QuestSim.</p>
-    </div>
-    <div class="divider"><span>never crossed</span></div>
-    <div class="stream engineering">
-      <h3>Engineering stream</h3>
-      <p>How children <i>in general</i> behave. Synthetic or de-identified aggregates only —
-         never an individual record.</p>
+  <div class="gutter">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="population">Population</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="activity">Activity runner</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="api">API sandbox</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="embed">Embed a game</button>
     </div>
   </div>
+</header>
 
-  <div class="section-label">The three prototypes — one per place a district's objection can land</div>
+<main class="gutter">
 
-  <div class="cards">
-
-    <div class="card p1">
-      <div class="thumb"><span class="num">1</span>
-        <img src="prototype-1-data-diet-toggle/preview.png" alt="Data Diet Toggle screen">
+  <!-- POPULATION -->
+  <section class="panel" id="panel-population" role="tabpanel">
+    <p class="lede">A population of <b>synthetic learners</b>, each an agent with six parameters grounded in learning-science
+      research — prior knowledge, learning rate, slip, guessing, hint-seeking and forgetting. Shape the cohort, save named
+      populations, and reuse them across tests. Everything is deterministic from the seed.</p>
+    <div class="split">
+      <div class="card card-pad">
+        <h3>Cohort</h3>
+        <div class="ctrl">
+          <label for="pop-n">Students <b id="pop-n-v">200</b></label>
+          <input type="range" id="pop-n" min="20" max="600" step="20" value="200">
+        </div>
+        <div class="ctrl">
+          <label for="pop-seed">Seed <b id="pop-seed-v">1</b></label>
+          <input type="range" id="pop-seed" min="1" max="99" step="1" value="1">
+        </div>
+        <div class="ctrl">
+          <label for="pop-preset">Preset</label>
+          <select id="pop-preset">
+            <option value="balanced">Balanced (baseline)</option>
+            <option value="advanced">Advanced cohort</option>
+            <option value="struggling">Struggling cohort</option>
+            <option value="gaming">High-gaming cohort</option>
+            <option value="forgetful">Forgetful cohort</option>
+          </select>
+        </div>
+        <div id="mean-sliders"></div>
+        <div class="ctrl" style="margin-top:16px;">
+          <label for="save-name">Save this population as</label>
+          <div class="row2">
+            <input type="text" id="save-name" placeholder="e.g. ELL 6th grade">
+            <button class="btn" id="save-btn">Save</button>
+          </div>
+        </div>
+        <div class="saved-list" id="saved-list"></div>
       </div>
-      <div class="card-body">
-        <div class="reframes">Reframes the policy surface</div>
-        <h2>Data Diet Toggle</h2>
-        <p class="desc">A clickable admin-console mock: the district picks how much the classroom
-          stream collects — Full, Standard, or Minimal — with tradeoffs in plain language and
-          QuestSim's share fixed at nothing.</p>
-        <span class="badge html">Clickable HTML mock</span>
-        <div class="actions">
-          <a class="btn primary" href="prototype-1-data-diet-toggle/index.html">Open the mock</a>
-          <a class="btn ghost" href="prototype-1-data-diet-toggle/README.md">README</a>
+      <div style="min-width:0;">
+        <div class="tiles" id="pop-tiles" style="margin-bottom:14px;"></div>
+        <div class="card card-pad" style="margin-bottom:14px;">
+          <h3>Parameter distributions</h3>
+          <div class="hist-grid" id="hist-grid"></div>
+        </div>
+        <div class="card card-pad">
+          <h3>Export this cohort</h3>
+          <div class="btn-row" style="margin-bottom:10px;">
+            <button class="btn sm" id="copy-json">Copy JSON</button>
+            <button class="btn sm" id="copy-csv">Copy CSV</button>
+            <span class="muted" id="copy-status" aria-live="polite"></span>
+          </div>
+          <pre class="out" id="export-preview" style="max-height:150px; overflow:auto;"></pre>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="card p2">
-      <div class="thumb"><span class="num">2</span>
-        <img src="prototype-2-mastery-only-export/figures/01_divergence_summary.png" alt="Divergence summary">
+  <!-- ACTIVITY -->
+  <section class="panel" id="panel-activity" role="tabpanel" hidden>
+    <p class="lede">Describe your app or game as a sequence of <b>skills</b>, each with its own difficulty, and run the whole
+      population through it — no code. See where they master, stall, guess, and need help, and how often the adaptive triggers
+      would fire. The default is a Pythagorean-theorem unit.</p>
+    <div class="split">
+      <div class="card card-pad">
+        <h3>Activity — skills &amp; difficulty</h3>
+        <div style="overflow-x:auto;">
+          <table class="grid" id="skill-table">
+            <thead><tr><th>Skill</th><th title="chance of a correct guess when unknown">guess</th><th title="chance of a wrong answer when known">slip</th><th title="chance of learning per attempt">learn</th><th></th></tr></thead>
+            <tbody id="skill-body"></tbody>
+          </table>
+        </div>
+        <div class="btn-row" style="margin:10px 0 16px;">
+          <button class="btn sm" id="add-skill">+ Add skill</button>
+          <button class="btn sm" id="reset-skills">Reset to default</button>
+        </div>
+        <h3>Adaptive engine</h3>
+        <div class="ctrl">
+          <label for="act-maxopp">Max attempts / skill <b id="act-maxopp-v">14</b></label>
+          <input type="range" id="act-maxopp" min="4" max="20" step="1" value="14">
+        </div>
+        <div class="ctrl">
+          <label for="act-ft">Fast-track mastery threshold <b id="act-ft-v">0.90</b></label>
+          <input type="range" id="act-ft" min="0.7" max="0.99" step="0.01" value="0.90">
+        </div>
+        <div class="ctrl">
+          <label for="act-scaf">Scaffold struggle threshold <b id="act-scaf-v">0.60</b></label>
+          <input type="range" id="act-scaf" min="0.3" max="0.9" step="0.05" value="0.60">
+        </div>
+        <button class="btn primary" id="run-activity" style="width:100%; margin-top:6px;">Run population through activity</button>
       </div>
-      <div class="card-body">
-        <div class="reframes">Reframes the architecture</div>
-        <h2>Mastery-Only Export</h2>
-        <p class="desc">A replay harness proving ACE can adapt on-device and export only a mastery
-          vector. ~99% of adaptation decisions survive; it names the two signals that carry the
-          residual.</p>
-        <span class="badge py">Runnable Python harness</span>
-        <div class="actions">
-          <a class="btn primary" href="prototype-2-mastery-only-export/output/report.html">View results</a>
-          <a class="btn ghost" href="prototype-2-mastery-only-export/README.md">README</a>
+      <div style="min-width:0;">
+        <div class="tiles" id="act-tiles" style="margin-bottom:14px;"></div>
+        <div class="card card-pad" style="margin-bottom:14px;">
+          <h3>Per-skill mastery</h3>
+          <div class="bars" id="skill-bars"></div>
+        </div>
+        <div class="card card-pad">
+          <h3>Final mastery distribution</h3>
+          <canvas id="mastery-hist" width="640" height="150"></canvas>
+          <p class="muted" id="act-caption" style="margin:8px 0 0;"></p>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="card p3">
-      <div class="thumb"><span class="num">3</span>
-        <img src="prototype-3-synthetic-student-tuning/figures/04_within_range.png" alt="Within-range validation">
+  <!-- API SANDBOX -->
+  <section class="panel" id="panel-api" role="tabpanel" hidden>
+    <p class="lede">The population is live on this page as <code class="inl">SyntheticPersonas</code>. Write the real scoring or
+      difficulty logic of your app against it and run the whole cohort through it. Your code runs in this page; nothing leaves
+      the browser.</p>
+    <div class="split">
+      <div style="min-width:0;">
+        <div class="card card-pad" style="margin-bottom:14px;">
+          <h3>Your code</h3>
+          <textarea id="api-code" rows="18" spellcheck="false"></textarea>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn primary" id="run-api">Run</button>
+            <button class="btn sm" id="reset-api">Reset example</button>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <h3>Output</h3>
+          <pre class="out" id="api-out">Run your code to see output.</pre>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="reframes">Reframes where the data comes from</div>
-        <h2>Synthetic Student Tuning</h2>
-        <p class="desc">A simulation harness that develops and calibrates ACE on ~200 synthetic
-          middle schoolers, so real student data is needed only for low-volume aggregate
-          validation — never for model development.</p>
-        <span class="badge py">Runnable Python harness</span>
-        <div class="actions">
-          <a class="btn primary" href="prototype-3-synthetic-student-tuning/output/report.html">View results</a>
-          <a class="btn ghost" href="prototype-3-synthetic-student-tuning/README.md">README</a>
+      <div class="card card-pad">
+        <h3>API</h3>
+        <div class="muted" id="api-docs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMBED -->
+  <section class="panel" id="panel-embed" role="tabpanel" hidden>
+    <p class="lede">Load a web game and drive it with persona <b>players</b>. The game and the lab talk over a tiny
+      <code class="inl">postMessage</code> protocol: the game asks the lab how a given persona would answer an item, and reports
+      each player's outcome. A working demo game is loaded below.</p>
+    <div class="split">
+      <div class="card card-pad">
+        <h3>Game under test</h3>
+        <div class="ctrl">
+          <label>Source</label>
+          <div class="seg" role="group" style="margin-bottom:8px;">
+            <button id="src-demo" aria-pressed="true">Demo game</button>
+            <button id="src-url" aria-pressed="false">Your URL</button>
+          </div>
+          <input type="url" id="game-url" placeholder="https://your-game.example/play" hidden>
+        </div>
+        <div class="ctrl">
+          <label for="embed-players">Players (from current population) <b id="embed-players-v">60</b></label>
+          <input type="range" id="embed-players" min="10" max="200" step="10" value="60">
+        </div>
+        <button class="btn primary" id="run-embed" style="width:100%;">Run players through the game</button>
+        <div class="note" style="margin-top:14px;">
+          <b>Protocol.</b> The game receives <code class="inl">persona-test:init</code> with its players, then for each item it
+          posts <code class="inl">persona-test:item</code> <code class="inl">{playerId, item:{guess,slip,learn}}</code> and the
+          lab replies <code class="inl">persona-test:response</code> <code class="inl">{correct, latencyMs, usedHint}</code>.
+          The game posts <code class="inl">persona-test:result</code> <code class="inl">{playerId, mastery}</code> per player.
+          A real game drops in a ~15-line adapter; the demo implements it in full.
+        </div>
+      </div>
+      <div style="min-width:0;">
+        <iframe class="game" id="game-frame" title="Game under test" sandbox="allow-scripts"></iframe>
+        <div class="tiles" id="embed-tiles" style="margin:14px 0;"></div>
+        <div class="card card-pad">
+          <h3>Live from the game</h3>
+          <pre class="out" id="embed-log" style="max-height:170px; overflow:auto;">Run the players to see the game report back.</pre>
         </div>
       </div>
     </div>
+  </section>
 
+  <div class="foot gutter" style="padding-left:0; padding-right:0;">
+    Synthetic Persona Lab · model grounded in Bayesian Knowledge Tracing (Corbett &amp; Anderson 1995), the power law of
+    practice, help-seeking and memory-decay research. No real student data. Deterministic from the seed. ·
+    <a href="overview.html" style="color:var(--accent); text-decoration:none;">The three prototypes&nbsp;↗</a>
   </div>
+</main>
 
-  <div class="relate">
-    <h3>How they interlock</h3>
-    <ul>
-      <li><b>Prototype 1</b> makes the narrowing a product feature a privacy officer can sign
-        against without calling counsel.</li>
-      <li><b>Prototype 2</b> shows ~99% of ACE's decisions survive moving on-device — and the
-        residual falls on exactly the two signals (response latency, hint timing) that
-        <b>Prototype 1's</b> Standard and Minimal levels drop.</li>
-      <li><b>Prototype 3</b> answers <i>if QuestSim never gets student data, how does the product
-        get better?</i> — and can supply the synthetic logged sessions <b>Prototype 2</b> replays.</li>
+<script>
+"use strict";
+/* ======================================================================
+   Engine — a browser port of the Synthetic Student Tuning model.
+   ====================================================================== */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gauss(r, mean, sd) {
+  const u = 1 - r(), v = r();
+  return mean + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+const MASTERY = 0.95, FT_CHECK = 3, ALPHA = 0.4;
+
+const PARAM_DEFS = [
+  { key: "prior", label: "Prior knowledge", mean: 0.20, sd: 0.10, min: 0.02, max: 0.70 },
+  { key: "learn", label: "Learning rate", mean: 1.00, sd: 0.30, min: 0.25, max: 2.20 },
+  { key: "slip", label: "Slip (errors)", mean: 1.00, sd: 0.30, min: 0.40, max: 2.50 },
+  { key: "guess", label: "Guessing", mean: 1.00, sd: 0.20, min: 0.40, max: 1.80 },
+  { key: "hint", label: "Hint-seeking", mean: 0.35, sd: 0.18, min: 0.00, max: 0.95 },
+  { key: "decay", label: "Forgetting", mean: 0.20, sd: 0.10, min: 0.02, max: 0.60 },
+];
+
+const DEFAULT_SKILLS = [
+  { name: "square_numbers", guess: 0.20, slip: 0.08, learn: 0.22 },
+  { name: "square_roots",   guess: 0.18, slip: 0.10, learn: 0.19 },
+  { name: "identify_hyp",   guess: 0.25, slip: 0.10, learn: 0.20 },
+  { name: "theorem_setup",  guess: 0.15, slip: 0.12, learn: 0.16 },
+  { name: "solve_hyp",      guess: 0.12, slip: 0.13, learn: 0.14 },
+  { name: "solve_leg",      guess: 0.10, slip: 0.15, learn: 0.12 },
+  { name: "word_problems",  guess: 0.10, slip: 0.17, learn: 0.10 },
+];
+
+function generate(opts) {
+  opts = opts || {};
+  const n = opts.n || 200, seed = opts.seed || 1;
+  const means = Object.assign({}, ...PARAM_DEFS.map(d => ({ [d.key]: d.mean })), opts.means || {});
+  const r = mulberry32(seed * 2654435761);
+  const personas = [];
+  for (let i = 0; i < n; i++) {
+    const p = { id: i };
+    for (const d of PARAM_DEFS) p[d.key] = clamp(gauss(r, means[d.key], d.sd), d.min, d.max);
+    personas.push(p);
+  }
+  return { personas, meta: { n, seed, means } };
+}
+
+// Fresh BKT state for one persona working one skill. `seed` makes it deterministic.
+function newLearnerState(persona, seed) {
+  return { r: mulberry32((seed >>> 0) || 1), known: null, pL: null, struggle: 0, lastErr: 0, hints: 0, opp: 0, persona };
+}
+
+// Simulate one attempt. item = {guess, slip, learn}. Mutates and returns an event.
+function respond(persona, item, state) {
+  if (state.pL === null) {
+    state.pL = clamp(persona.prior, 0.02, 0.95);
+    state.known = state.r() < state.pL;
+  }
+  state.opp += 1;
+  const guess = clamp(item.guess * persona.guess, 0.02, 0.9);
+  const slip = clamp(item.slip * persona.slip, 0.02, 0.6);
+  const learn = clamp(item.learn * persona.learn, 0.02, 0.6);
+  const pHint = clamp(persona.hint * (state.lastErr ? 1.6 : 1.0), 0, 0.95);
+  const usedHint = state.r() < pHint;
+  if (usedHint) state.hints += 1;
+  const eGuess = usedHint ? Math.min(0.9, guess + 0.35) : guess;
+  const eSlip = usedHint ? Math.max(0.02, slip - 0.04) : slip;
+  const correct = state.known ? (state.r() > eSlip) : (state.r() < eGuess);
+  state.lastErr = correct ? 0 : 1;
+  state.struggle = ALPHA * (correct ? 0 : 1) + (1 - ALPHA) * state.struggle;
+  // latency, seconds
+  let lat;
+  if (state.known && correct) lat = gauss(state.r, 2.6, 0.7);
+  else if (state.known && !correct) lat = gauss(state.r, 3.0, 0.9);
+  else if (!state.known && correct) lat = gauss(state.r, 1.3, 0.4);
+  else lat = gauss(state.r, 4.6, 1.4);
+  lat = Math.max(0.4, lat);
+  // BKT update
+  const pc = state.pL * (1 - eSlip) + (1 - state.pL) * eGuess;
+  const num = correct ? state.pL * (1 - eSlip) : state.pL * eSlip;
+  const den = correct ? pc : (1 - pc);
+  state.pL = den > 0 ? num / den : state.pL;
+  state.pL = state.pL + (1 - state.pL) * learn;
+  if (!state.known && state.r() < learn) state.known = true;
+  return { correct, latencyMs: Math.round(lat * 1000), usedHint,
+           mastery: state.pL, struggle: state.struggle, attempt: state.opp };
+}
+
+// No-code runner: whole population through a skill activity with ACE triggers.
+function runActivity(personas, activity, opts) {
+  opts = opts || {};
+  const skills = activity.skills, maxOpp = activity.maxOpp || 14;
+  const ftThr = activity.ftThr != null ? activity.ftThr : 0.90;
+  const scafThr = activity.scafThr != null ? activity.scafThr : 0.60;
+  const seed = opts.seed || 7;
+  const S = skills.length, N = personas.length;
+  let ft = 0, scaf = 0, opps = 0, encounters = N * S;
+  const perStudent = new Array(N).fill(0);
+  const perSkillMastery = new Array(S).fill(0);
+  const perSkillStall = new Array(S).fill(0);
+  let masterySum = 0, retentionSum = 0;
+  const finalMasteries = [];
+  for (let i = 0; i < N; i++) {
+    const persona = personas[i];
+    let prev = null, acc = 0;
+    for (let s = 0; s < S; s++) {
+      const st = newLearnerState(persona, seed + i * 131 + s * 977);
+      // cumulative prior: a mastered prerequisite raises this skill's prior
+      st.pL = clamp(persona.prior + (prev == null ? 0 : 0.10 * (prev - 0.5)), 0.02, 0.95);
+      st.known = st.r() < st.pL;
+      let scaffolded = false, learnBoost = 1;
+      for (let o = 1; o <= maxOpp; o++) {
+        const item = { guess: skills[s].guess, slip: skills[s].slip, learn: skills[s].learn * learnBoost };
+        const ev = respond(persona, item, st);
+        opps += 1;
+        if (o === FT_CHECK && ev.mastery >= ftThr) { ft += 1; break; }
+        if (o >= 4 && !scaffolded && ev.struggle >= scafThr) { scaffolded = true; scaf += 1; learnBoost = 1.7; }
+        if (ev.mastery >= MASTERY && o >= FT_CHECK) break;
+      }
+      const m = st.pL;
+      perSkillMastery[s] += m;
+      if (m < 0.6) perSkillStall[s] += 1;
+      masterySum += m; retentionSum += m * Math.exp(-persona.decay);
+      acc += m; prev = m;
+    }
+    perStudent[i] = acc / S;
+    finalMasteries.push(acc / S);
+  }
+  finalMasteries.sort((a, b) => a - b);
+  const q = finalMasteries[Math.floor(0.25 * (N - 1))];
+  return {
+    n: N, skills: skills.map(s => s.name),
+    meanMastery: masterySum / encounters,
+    retention: retentionSum / encounters,
+    bottomQuartile: q,
+    fastTrackRate: ft / encounters,
+    scaffoldRate: scaf / encounters,
+    opportunitiesPerSkill: opps / encounters,
+    perSkillMastery: perSkillMastery.map(x => x / N),
+    perSkillStall: perSkillStall.map(x => x / N),
+    finalMasteries,
+  };
+}
+
+window.SyntheticPersonas = {
+  version: "1.0",
+  PARAM_DEFS, DEFAULT_SKILLS, MASTERY,
+  generate, newLearnerState, respond, runActivity,
+  clamp,
+};
+
+/* ======================================================================
+   App state + helpers
+   ====================================================================== */
+const $ = sel => document.querySelector(sel);
+const $all = sel => Array.from(document.querySelectorAll(sel));
+const fmt = (x, d = 2) => Number(x).toFixed(d);
+const pct = x => (100 * x).toFixed(1) + "%";
+
+const state = {
+  means: Object.assign({}, ...PARAM_DEFS.map(d => ({ [d.key]: d.mean }))),
+  n: 200, seed: 1,
+  population: null,
+  skills: DEFAULT_SKILLS.map(s => Object.assign({}, s)),
+};
+
+const PRESETS = {
+  balanced:   {},
+  advanced:   { prior: 0.32, learn: 1.35, slip: 0.80, decay: 0.14 },
+  struggling: { prior: 0.12, learn: 0.70, slip: 1.45, hint: 0.50, decay: 0.30 },
+  gaming:     { guess: 1.45, slip: 1.15, hint: 0.55 },
+  forgetful:  { decay: 0.42, prior: 0.16 },
+};
+
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ---- theme ---- */
+function applyTheme(t) {
+  if (t) document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+  try { if (t) localStorage.setItem("pl-theme", t); else localStorage.removeItem("pl-theme"); } catch (e) {}
+  redrawAll();
+}
+$("#theme-btn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = cur ? cur === "dark" : prefersDark;
+  applyTheme(isDark ? "light" : "dark");
+});
+try { const saved = localStorage.getItem("pl-theme"); if (saved) document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
+
+/* ---- tabs ---- */
+$all(".tab").forEach(tab => tab.addEventListener("click", () => {
+  $all(".tab").forEach(t => t.setAttribute("aria-selected", t === tab ? "true" : "false"));
+  $all(".panel").forEach(p => { p.hidden = p.id !== "panel-" + tab.dataset.tab; });
+  if (tab.dataset.tab === "population") drawHistograms();
+  if (tab.dataset.tab === "activity") drawMasteryHist(lastActivity);
+}));
+
+/* ---- canvas charts ---- */
+function prepCanvas(c, h) {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const w = c.clientWidth || 300;
+  c.width = w * dpr; c.height = h * dpr;
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+function histBins(vals, lo, hi, nb) {
+  const b = new Array(nb).fill(0);
+  for (const v of vals) { let k = Math.floor((v - lo) / (hi - lo) * nb); k = clamp(k, 0, nb - 1); b[k]++; }
+  return b;
+}
+function drawHist(canvas, vals, lo, hi, color, height) {
+  const { ctx, w, h } = prepCanvas(canvas, height || 70);
+  const nb = 18, bins = histBins(vals, lo, hi, nb), mx = Math.max(1, ...bins);
+  const bw = w / nb;
+  for (let i = 0; i < nb; i++) {
+    const bh = (bins[i] / mx) * (h - 14);
+    ctx.fillStyle = color;
+    ctx.fillRect(i * bw + 1, h - 12 - bh, bw - 2, bh);
+  }
+  ctx.fillStyle = cssVar("--ink-faint"); ctx.font = "10px " + cssVar("--mono").split(",")[0];
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(fmt(lo, 2), 1, h - 1);
+  ctx.textAlign = "right"; ctx.fillText(fmt(hi, 2), w - 1, h - 1); ctx.textAlign = "left";
+}
+
+/* ======================================================================
+   POPULATION tab
+   ====================================================================== */
+function buildMeanSliders() {
+  const host = $("#mean-sliders"); host.innerHTML = "";
+  for (const d of PARAM_DEFS) {
+    const wrap = document.createElement("div"); wrap.className = "ctrl";
+    wrap.innerHTML = `<label for="m-${d.key}">${d.label} mean <b id="m-${d.key}-v">${fmt(state.means[d.key])}</b></label>
+      <input type="range" id="m-${d.key}" min="${d.min}" max="${d.max}" step="0.01" value="${state.means[d.key]}">`;
+    host.appendChild(wrap);
+    wrap.querySelector("input").addEventListener("input", e => {
+      state.means[d.key] = parseFloat(e.target.value);
+      $(`#m-${d.key}-v`).textContent = fmt(state.means[d.key]);
+      regenerate();
+    });
+  }
+}
+function syncMeanSliders() {
+  for (const d of PARAM_DEFS) {
+    const inp = $(`#m-${d.key}`); if (inp) { inp.value = state.means[d.key]; $(`#m-${d.key}-v`).textContent = fmt(state.means[d.key]); }
+  }
+}
+function regenerate() {
+  state.population = generate({ n: state.n, seed: state.seed, means: state.means }).personas;
+  drawPopTiles(); drawHistograms(); updateExport();
+}
+function drawPopTiles() {
+  const pop = state.population, n = pop.length;
+  const mean = k => pop.reduce((a, p) => a + p[k], 0) / n;
+  const tiles = [
+    ["Students", n],
+    ["Prior knowledge", fmt(mean("prior"))],
+    ["Learning rate", fmt(mean("learn"))],
+    ["Hint-seeking", fmt(mean("hint"))],
+    ["Forgetting", fmt(mean("decay"))],
+  ];
+  $("#pop-tiles").innerHTML = tiles.map(([k, v]) =>
+    `<div class="tile"><div class="v tnum">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+function drawHistograms() {
+  if ($("#panel-population").hidden || !state.population) return;
+  const host = $("#hist-grid"); host.innerHTML = "";
+  for (const d of PARAM_DEFS) {
+    const vals = state.population.map(p => p[d.key]);
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const cell = document.createElement("div"); cell.className = "hist";
+    cell.innerHTML = `<div class="ht">${d.label}</div><div class="hs">mean ${fmt(mean)} · range ${fmt(d.min)}–${fmt(d.max)}</div><canvas></canvas>`;
+    host.appendChild(cell);
+    drawHist(cell.querySelector("canvas"), vals, d.min, d.max, cssVar("--accent"), 66);
+  }
+}
+function cohortJSON() {
+  return JSON.stringify({ meta: { n: state.n, seed: state.seed, means: state.means },
+    personas: state.population }, null, 1);
+}
+function cohortCSV() {
+  const keys = PARAM_DEFS.map(d => d.key);
+  const head = ["id", ...keys].join(",");
+  const rows = state.population.map(p => [p.id, ...keys.map(k => fmt(p[k], 4))].join(","));
+  return [head, ...rows].join("\n");
+}
+function updateExport() {
+  const txt = cohortJSON();
+  $("#export-preview").textContent = txt.length > 1400 ? txt.slice(0, 1400) + "\n  … (" + state.population.length + " personas)" : txt;
+}
+async function copyText(text, statusEl) {
+  try { await navigator.clipboard.writeText(text); statusEl.textContent = "Copied ✓"; }
+  catch (e) {
+    const ta = $("#export-preview"); const r = document.createRange(); r.selectNodeContents(ta);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    statusEl.textContent = "Select-all shown below, press ⌘/Ctrl-C";
+  }
+  setTimeout(() => { statusEl.textContent = ""; }, 2600);
+}
+$("#copy-json").addEventListener("click", () => copyText(cohortJSON(), $("#copy-status")));
+$("#copy-csv").addEventListener("click", () => copyText(cohortCSV(), $("#copy-status")));
+
+$("#pop-n").addEventListener("input", e => { state.n = +e.target.value; $("#pop-n-v").textContent = state.n; regenerate(); });
+$("#pop-seed").addEventListener("input", e => { state.seed = +e.target.value; $("#pop-seed-v").textContent = state.seed; regenerate(); });
+$("#pop-preset").addEventListener("change", e => {
+  const base = Object.assign({}, ...PARAM_DEFS.map(d => ({ [d.key]: d.mean })));
+  state.means = Object.assign(base, PRESETS[e.target.value] || {});
+  syncMeanSliders(); regenerate();
+});
+
+/* ---- saved populations (localStorage) ---- */
+function loadSaved() { try { return JSON.parse(localStorage.getItem("pl-saved") || "{}"); } catch (e) { return {}; } }
+function writeSaved(obj) { try { localStorage.setItem("pl-saved", JSON.stringify(obj)); } catch (e) {} }
+function renderSaved() {
+  const saved = loadSaved(), host = $("#saved-list"); host.innerHTML = "";
+  const names = Object.keys(saved);
+  if (!names.length) { host.innerHTML = '<div class="muted" style="margin-top:4px;">No saved populations yet.</div>'; return; }
+  for (const nm of names) {
+    const item = document.createElement("div"); item.className = "saved-item";
+    item.innerHTML = `<span class="nm" title="${nm}">${nm}</span><button data-load>Load</button><button class="x" data-del aria-label="Delete">✕</button>`;
+    item.querySelector("[data-load]").addEventListener("click", () => {
+      const cfg = saved[nm]; state.n = cfg.n; state.seed = cfg.seed; state.means = Object.assign({}, cfg.means);
+      $("#pop-n").value = state.n; $("#pop-n-v").textContent = state.n;
+      $("#pop-seed").value = state.seed; $("#pop-seed-v").textContent = state.seed;
+      syncMeanSliders(); regenerate();
+    });
+    item.querySelector("[data-del]").addEventListener("click", () => { const s = loadSaved(); delete s[nm]; writeSaved(s); renderSaved(); });
+    host.appendChild(item);
+  }
+}
+$("#save-btn").addEventListener("click", () => {
+  const nm = $("#save-name").value.trim(); if (!nm) { $("#save-name").focus(); return; }
+  const saved = loadSaved(); saved[nm] = { n: state.n, seed: state.seed, means: Object.assign({}, state.means) };
+  writeSaved(saved); $("#save-name").value = ""; renderSaved();
+});
+
+/* ======================================================================
+   ACTIVITY tab
+   ====================================================================== */
+let lastActivity = null;
+function renderSkillTable() {
+  const body = $("#skill-body"); body.innerHTML = "";
+  state.skills.forEach((sk, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      `<td><input value="${sk.name}" data-f="name" style="min-width:120px;"></td>` +
+      `<td><input value="${sk.guess}" data-f="guess" inputmode="decimal"></td>` +
+      `<td><input value="${sk.slip}" data-f="slip" inputmode="decimal"></td>` +
+      `<td><input value="${sk.learn}" data-f="learn" inputmode="decimal"></td>` +
+      `<td><button class="skill-del" aria-label="Remove skill">✕</button></td>`;
+    tr.querySelectorAll("input").forEach(inp => inp.addEventListener("change", e => {
+      const f = e.target.dataset.f;
+      sk[f] = f === "name" ? e.target.value : clamp(parseFloat(e.target.value) || 0, 0, 1);
+      if (f !== "name") e.target.value = sk[f];
+    }));
+    tr.querySelector(".skill-del").addEventListener("click", () => { state.skills.splice(i, 1); renderSkillTable(); });
+    body.appendChild(tr);
+  });
+}
+$("#add-skill").addEventListener("click", () => { state.skills.push({ name: "new_skill", guess: 0.15, slip: 0.12, learn: 0.15 }); renderSkillTable(); });
+$("#reset-skills").addEventListener("click", () => { state.skills = DEFAULT_SKILLS.map(s => Object.assign({}, s)); renderSkillTable(); });
+
+[["act-maxopp", "act-maxopp-v", 0], ["act-ft", "act-ft-v", 2], ["act-scaf", "act-scaf-v", 2]].forEach(([id, vid, dp]) =>
+  $("#" + id).addEventListener("input", e => { $("#" + vid).textContent = (+e.target.value).toFixed(dp); }));
+
+$("#run-activity").addEventListener("click", () => {
+  const activity = {
+    skills: state.skills.map(s => Object.assign({}, s)),
+    maxOpp: +$("#act-maxopp").value, ftThr: +$("#act-ft").value, scafThr: +$("#act-scaf").value,
+  };
+  const res = runActivity(state.population, activity, { seed: 7 });
+  lastActivity = res;
+  const tiles = [
+    ["Mean mastery", fmt(res.meanMastery)],
+    ["Retention", fmt(res.retention)],
+    ["Bottom quartile", fmt(res.bottomQuartile)],
+    ["Fast-track rate", pct(res.fastTrackRate)],
+    ["Scaffold rate", pct(res.scaffoldRate)],
+    ["Attempts / skill", fmt(res.opportunitiesPerSkill, 1)],
+  ];
+  $("#act-tiles").innerHTML = tiles.map(([k, v]) => `<div class="tile"><div class="v tnum">${v}</div><div class="k">${k}</div></div>`).join("");
+  const mx = Math.max(...res.perSkillMastery, 0.01);
+  $("#skill-bars").innerHTML = res.skills.map((nm, i) => {
+    const m = res.perSkillMastery[i], stall = res.perSkillStall[i];
+    const col = m >= 0.8 ? "var(--good)" : m >= 0.6 ? "var(--accent)" : "var(--warn)";
+    return `<div class="bar-row"><span class="blab" title="${nm}">${nm}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${(m / 1 * 100).toFixed(0)}%; background:${col};"></span></span>
+      <span class="bval">${fmt(m)}</span></div>`;
+  }).join("");
+  drawMasteryHist(res);
+  const worst = res.skills[res.perSkillStall.indexOf(Math.max(...res.perSkillStall))];
+  $("#act-caption").textContent =
+    `${res.n} students · most stall on “${worst}” (${pct(Math.max(...res.perSkillStall))} below 0.6 mastery). ` +
+    `Retention (${fmt(res.retention)}) trails mastery (${fmt(res.meanMastery)}) because of forgetting.`;
+});
+function drawMasteryHist(res) {
+  if (!res || $("#panel-activity").hidden) return;
+  drawHist($("#mastery-hist"), res.finalMasteries, 0, 1, cssVar("--accent"), 150);
+}
+
+/* ======================================================================
+   API SANDBOX tab
+   ====================================================================== */
+const API_EXAMPLE =
+`// 'SP' is window.SyntheticPersonas. Build a cohort and run your own
+// difficulty/scoring logic over every persona. Use print(...) to log.
+
+const { personas } = SP.generate({ n: 200, seed: 1 });
+
+// Your game: one skill that gets harder each level.
+let mastered = 0, totalLevels = 0;
+for (const p of personas) {
+  const st = SP.newLearnerState(p, 100 + p.id);
+  let level = 1;
+  for (let turn = 0; turn < 20; turn++) {
+    const item = { guess: 0.15, slip: 0.10 + level * 0.01, learn: 0.18 };
+    const ev = SP.respond(p, item, st);      // -> {correct, latencyMs, usedHint, mastery}
+    if (ev.correct) level++;                  // your scoring rule
+    if (ev.mastery >= 0.95) { mastered++; break; }
+  }
+  totalLevels += level;
+}
+print("students mastered:", mastered, "of", personas.length);
+print("avg level reached:", (totalLevels / personas.length).toFixed(1));`;
+
+function buildApiDocs() {
+  $("#api-docs").innerHTML = `
+    <p style="margin:0 0 10px;"><code class="inl">SyntheticPersonas</code> (alias <code class="inl">SP</code>) — v${window.SyntheticPersonas.version}</p>
+    <ul style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:9px;">
+      <li><code class="inl">generate({n, seed, means})</code> → <code class="inl">{personas, meta}</code>. Each persona has
+        <code class="inl">${PARAM_DEFS.map(d => d.key).join(", ")}</code>.</li>
+      <li><code class="inl">newLearnerState(persona, seed)</code> → a fresh per-skill state.</li>
+      <li><code class="inl">respond(persona, item, state)</code> → <code class="inl">{correct, latencyMs, usedHint, mastery, struggle}</code>.
+        <code class="inl">item = {guess, slip, learn}</code> is your item's difficulty.</li>
+      <li><code class="inl">runActivity(personas, {skills, maxOpp, ftThr, scafThr})</code> → cohort aggregates.</li>
+      <li><code class="inl">PARAM_DEFS</code>, <code class="inl">DEFAULT_SKILLS</code>, <code class="inl">clamp</code>.</li>
     </ul>
-  </div>
+    <p class="muted" style="margin:12px 0 0;">Deterministic: same seeds → same results. <code class="inl">print(...)</code> writes to Output.</p>`;
+}
+$("#api-code").value = API_EXAMPLE;
+$("#reset-api").addEventListener("click", () => { $("#api-code").value = API_EXAMPLE; });
+$("#run-api").addEventListener("click", () => {
+  const out = $("#api-out"); const logs = [];
+  const print = (...args) => logs.push(args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+  try {
+    const fn = new Function("SP", "SyntheticPersonas", "print", "console", $("#api-code").value);
+    fn(window.SyntheticPersonas, window.SyntheticPersonas, print, { log: print, error: print });
+    out.textContent = logs.length ? logs.join("\n") : "(no output — call print(...) to log)";
+    out.classList.remove("err");
+  } catch (e) {
+    out.innerHTML = `<span class="err">${String(e && e.stack || e)}</span>`;
+  }
+});
 
-  <footer>
-    From “Wicked Problem Prototypes: Personalization Without the Data Districts Can’t Defend”
-    (Linda Bernard, Nov 2026).<br>
-    Parameters grounded in Bayesian Knowledge Tracing, the power law of practice, help-seeking and
-    memory-decay research. No real student data is used anywhere in this repository.
-  </footer>
+/* ======================================================================
+   EMBED tab — postMessage protocol + bundled demo game
+   ====================================================================== */
+const DEMO_GAME = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  body{font-family:system-ui,sans-serif;margin:0;padding:14px;color:#1b2330;background:#fff}
+  h2{font-size:15px;margin:0 0 8px} .log{font-family:ui-monospace,monospace;font-size:11.5px;color:#545c6b;
+  height:150px;overflow:auto;background:#f3f5f9;border-radius:8px;padding:8px;white-space:pre-wrap}
+  .bar{height:10px;background:#e2e6ee;border-radius:6px;overflow:hidden;margin:8px 0}
+  .bar>span{display:block;height:100%;width:0;background:#4863d4;transition:width .2s}
+  </style></head><body>
+  <h2>🎮 Number Climb (demo)</h2>
+  <div class="bar"><span id="p"></span></div>
+  <div class="log" id="log">Waiting for players…</div>
+  <script>
+  const log=document.getElementById('log'), bar=document.getElementById('p');
+  let players=[], idx=0, results=[];
+  function say(t){ log.textContent += "\\n"+t; log.scrollTop=log.scrollHeight; }
+  function ask(playerId, item){ return new Promise(res=>{
+    function h(e){ if(e.data&&e.data.type==='persona-test:response'&&e.data.playerId===playerId){
+      window.removeEventListener('message',h); res(e.data); } }
+    window.addEventListener('message',h);
+    parent.postMessage({type:'persona-test:item', playerId, item}, '*');
+  }); }
+  async function playOne(player){
+    // the game's own design: difficulty ramps as the player answers correctly
+    let level=1, mastery=0;
+    for(let turn=0; turn<16; turn++){
+      const item={guess:0.15, slip:0.09+level*0.012, learn:0.18};
+      const ev=await ask(player.id, item);
+      mastery=ev.mastery;
+      if(ev.correct) level++;
+      if(mastery>=0.95) break;
+    }
+    parent.postMessage({type:'persona-test:result', playerId:player.id, mastery, level}, '*');
+    return {mastery, level};
+  }
+  window.addEventListener('message', async e=>{
+    if(!e.data||e.data.type!=='persona-test:init') return;
+    players=e.data.players; idx=0; results=[]; log.textContent="Loaded "+players.length+" players.";
+    for(const pl of players){ const r=await playOne(pl); results.push(r); idx++;
+      bar.style.width=(100*idx/players.length)+'%';
+      if(idx%10===0||idx===players.length) say("played "+idx+"/"+players.length); }
+    const avgL=(results.reduce((a,r)=>a+r.level,0)/results.length).toFixed(1);
+    say("done · avg level "+avgL);
+    parent.postMessage({type:'persona-test:done', count:results.length}, '*');
+  });
+  parent.postMessage({type:'persona-test:ready'}, '*');
+  <\/script></body></html>`;
 
-</div>
+let embedPlayers = [], embedStates = {}, embedResults = [];
+function setGameSrc(which) {
+  $("#src-demo").setAttribute("aria-pressed", which === "demo");
+  $("#src-url").setAttribute("aria-pressed", which === "url");
+  $("#game-url").hidden = which !== "url";
+  const frame = $("#game-frame");
+  if (which === "demo") { frame.removeAttribute("src"); frame.srcdoc = DEMO_GAME; }
+  else { const u = $("#game-url").value.trim(); frame.removeAttribute("srcdoc"); if (u) frame.src = u; }
+}
+$("#src-demo").addEventListener("click", () => setGameSrc("demo"));
+$("#src-url").addEventListener("click", () => setGameSrc("url"));
+$("#game-url").addEventListener("change", () => { if ($("#src-url").getAttribute("aria-pressed") === "true") setGameSrc("url"); });
+$("#embed-players").addEventListener("input", e => { $("#embed-players-v").textContent = e.target.value; });
+
+function embedLog(t) { const el = $("#embed-log"); el.textContent += "\n" + t; el.scrollTop = el.scrollHeight; }
+
+window.addEventListener("message", e => {
+  const d = e.data; if (!d || typeof d !== "object") return;
+  const frame = $("#game-frame");
+  if (d.type === "persona-test:ready") { embedLog("game ready."); }
+  else if (d.type === "persona-test:item") {
+    const st = embedStates[d.playerId];
+    if (!st) return;
+    const ev = SyntheticPersonas.respond(st.persona, d.item, st);
+    frame.contentWindow.postMessage({ type: "persona-test:response", playerId: d.playerId,
+      correct: ev.correct, latencyMs: ev.latencyMs, usedHint: ev.usedHint, mastery: ev.mastery }, "*");
+  }
+  else if (d.type === "persona-test:result") {
+    embedResults.push(d);
+    if (embedResults.length % 10 === 0) renderEmbedTiles();
+  }
+  else if (d.type === "persona-test:done") { renderEmbedTiles(); embedLog("collected " + embedResults.length + " player outcomes."); }
+});
+function renderEmbedTiles() {
+  if (!embedResults.length) return;
+  const ms = embedResults.map(r => r.mastery);
+  const mean = ms.reduce((a, b) => a + b, 0) / ms.length;
+  const passed = ms.filter(m => m >= SyntheticPersonas.MASTERY).length;
+  const lv = embedResults.map(r => r.level || 0);
+  const avgL = lv.reduce((a, b) => a + b, 0) / lv.length;
+  $("#embed-tiles").innerHTML = [
+    ["Players", embedResults.length],
+    ["Mean mastery", fmt(mean)],
+    ["Reached mastery", pct(passed / embedResults.length)],
+    ["Avg level", fmt(avgL, 1)],
+  ].map(([k, v]) => `<div class="tile"><div class="v tnum">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+$("#run-embed").addEventListener("click", () => {
+  const frame = $("#game-frame");
+  const nP = +$("#embed-players").value;
+  embedPlayers = state.population.slice(0, nP);
+  embedStates = {}; embedResults = [];
+  embedPlayers.forEach(p => { embedStates[p.id] = SyntheticPersonas.newLearnerState(p, 500 + p.id); });
+  $("#embed-log").textContent = "Sending " + embedPlayers.length + " players to the game…";
+  $("#embed-tiles").innerHTML = "";
+  const players = embedPlayers.map(p => ({ id: p.id }));
+  try { frame.contentWindow.postMessage({ type: "persona-test:init", players, config: {} }, "*"); }
+  catch (err) { embedLog("could not reach the game frame: " + err); }
+});
+
+/* ======================================================================
+   init
+   ====================================================================== */
+function redrawAll() { drawHistograms(); drawMasteryHist(lastActivity); }
+window.addEventListener("resize", () => { clearTimeout(window._rz); window._rz = setTimeout(redrawAll, 150); });
+
+buildMeanSliders();
+renderSkillTable();
+buildApiDocs();
+renderSaved();
+regenerate();
+setGameSrc("demo");
+</script>
 </body>
 </html>

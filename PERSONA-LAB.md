@@ -4,7 +4,8 @@ A self-contained, in-browser site for **testing educational apps and games again
 a population of synthetic student personas**. It's a browser port of the
 Synthetic Student Tuning model (Prototype 3), turned into a usable tool.
 
-**Live (private) page:** https://claude.ai/artifact/VAogVdZo3JPmsTgTFgjBvv
+**Live site:** https://synthetic-student.pages.dev/
+(also published as a private Claude artifact: https://claude.ai/artifact/VAogVdZo3JPmsTgTFgjBvv)
 
 Everything runs client-side — no server, no build, no data leaves the browser.
 Open `index.html` directly, or use the live link above.
