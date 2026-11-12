@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-11",
+  "generated": "2026-11-12",
   "skills": [
     "square_numbers",
     "square_roots",
@@ -25,28 +25,28 @@
       "scaf_thr": 0.8
     },
     "eval_syn": {
-      "ft_rate": 0.053246753246753244,
-      "scaf_rate": 0.5506493506493506,
-      "mean_mastery": 0.7410901043761494,
-      "bottom_quartile_mastery": 0.6219534891464931,
-      "retention": 0.5498108495826349,
-      "opportunities_per_skill": 10.800649350649351,
-      "n_students": 220
+      "mean_mastery": 0.7431243932926569,
+      "bottom_quartile_mastery": 0.6301322920705911,
+      "retention": 0.5572432159398636,
+      "opportunities_per_skill": 10.831547619047619
     },
     "eval_real": {
-      "ft_rate": 0.08961038961038961,
-      "scaf_rate": 0.4831168831168831,
-      "mean_mastery": 0.7440363267398652,
-      "bottom_quartile_mastery": 0.6360761436118417,
-      "retention": 0.5522291245969183,
-      "opportunities_per_skill": 10.651948051948052,
-      "n_students": 220
+      "mean_mastery": 0.73130663346734,
+      "bottom_quartile_mastery": 0.6204893946013823,
+      "retention": 0.5482655724017624,
+      "opportunities_per_skill": 10.633982683982685
     },
     "deltas": {
-      "mean_mastery": 0.002946222363715778,
-      "bottom_quartile_mastery": 0.01412265446534866,
-      "retention": 0.0024182750142833775,
-      "opportunities_per_skill": 0.14870129870129922
+      "mean_mastery": 0.011817759825316854,
+      "bottom_quartile_mastery": 0.009642897469208767,
+      "retention": 0.008977643538101154,
+      "opportunities_per_skill": 0.19756493506493378
+    },
+    "delta_std": {
+      "mean_mastery": 0.0074718757041142775,
+      "bottom_quartile_mastery": 0.015507051630857025,
+      "retention": 0.005689399805812393,
+      "opportunities_per_skill": 0.09483241704785675
     },
     "passed": {
       "mean_mastery": true,
@@ -59,27 +59,236 @@
   "transfer": {
     "tuned_scaf": 0.75,
     "improved_scaf": 0.7,
-    "syn_before": 0.8774521831076348,
-    "syn_after": 0.8901194615874236,
-    "real_before": 0.6297363750766798,
-    "real_after": 0.6408817170359679,
-    "syn_gain": 0.012667278479788768,
-    "real_gain": 0.011145341959288069,
+    "syn_before": 0.8819548194770399,
+    "syn_after": 0.8895274933276456,
+    "real_before": 0.6437067271343837,
+    "real_after": 0.6629711982466142,
+    "syn_gain": 0.007572673850605671,
+    "real_gain": 0.019264471112230508,
     "transfers": true
   },
   "aggregate_feedback": {
-    "real_ft_rate": 0.045584415584415595,
-    "recovered_shift": 0.5499999999999999,
+    "real_ft_rate": 0.05090909090909092,
+    "recovered_shift": 0.6,
+    "match_error": 0.0029004329004328894,
     "true_shift": 0.6,
     "n_aggregates_used": 1
   },
   "caveat": {
-    "recovered_shift": 0.5499999999999999,
-    "syn_mean_mastery": 0.7796531096523336,
-    "real_mean_mastery": 0.7601127913425448,
-    "mastery_gap": 0.01954031830978875,
-    "syn_retention": 0.6055900157068819,
-    "real_retention": 0.565004202991267,
-    "retention_gap": 0.0405858127156149
-  }
+    "recovered_shift": 0.6,
+    "syn_mean_mastery": 0.7632350043327579,
+    "real_mean_mastery": 0.7692940244559934,
+    "mastery_gap": 0.006059020123235448,
+    "syn_retention": 0.5903782150123836,
+    "real_retention": 0.5764186332028901,
+    "retention_gap": 0.013959581809493526
+  },
+  "parameter_recovery": {
+    "rows": [
+      {
+        "true": 0.0,
+        "recovered_mean": 0.0,
+        "recovered_std": 0.0
+      },
+      {
+        "true": 0.3,
+        "recovered_mean": 0.28333333333333327,
+        "recovered_std": 0.062360956446232345
+      },
+      {
+        "true": 0.6,
+        "recovered_mean": 0.5833333333333334,
+        "recovered_std": 0.04714045207910316
+      },
+      {
+        "true": 0.9,
+        "recovered_mean": 0.8666666666666667,
+        "recovered_std": 0.023570226039551608
+      }
+    ],
+    "mae": 0.016666666666666663
+  },
+  "scenarios": {
+    "uniform_harder": {
+      "description": "The synthetic family, just harder.",
+      "in_family": true,
+      "overall_pass": true,
+      "passed": {
+        "mean_mastery": true,
+        "bottom_quartile_mastery": true,
+        "retention": true,
+        "opportunities_per_skill": true
+      },
+      "deltas": {
+        "mean_mastery": 0.016037979945971004,
+        "bottom_quartile_mastery": 0.006859745144156992,
+        "retention": 0.012681879008406338,
+        "opportunities_per_skill": 0.14972943722943732
+      },
+      "recovered_shift": 0.65,
+      "true_shift": 0.6,
+      "retention_gap": 0.02814357598453887,
+      "mastery_gap": 0.025719038345464518
+    },
+    "forgetting_tail": {
+      "description": "Harder + a high-forgetting tail (absenteeism).",
+      "in_family": false,
+      "overall_pass": true,
+      "passed": {
+        "mean_mastery": true,
+        "bottom_quartile_mastery": true,
+        "retention": true,
+        "opportunities_per_skill": true
+      },
+      "deltas": {
+        "mean_mastery": 0.011817759825316854,
+        "bottom_quartile_mastery": 0.009642897469208767,
+        "retention": 0.008977643538101154,
+        "opportunities_per_skill": 0.19756493506493378
+      },
+      "recovered_shift": 0.6,
+      "true_shift": 0.6,
+      "retention_gap": 0.013959581809493526,
+      "mastery_gap": 0.006059020123235448
+    },
+    "bimodal": {
+      "description": "Advanced + struggling subpopulations, not one hump.",
+      "in_family": false,
+      "overall_pass": true,
+      "passed": {
+        "mean_mastery": true,
+        "bottom_quartile_mastery": true,
+        "retention": true,
+        "opportunities_per_skill": true
+      },
+      "deltas": {
+        "mean_mastery": 0.0127350967827351,
+        "bottom_quartile_mastery": 0.01420741878437548,
+        "retention": 0.010196033094919676,
+        "opportunities_per_skill": 0.17180735930736013
+      },
+      "recovered_shift": 0.3,
+      "true_shift": 0.6,
+      "retention_gap": 0.0756383858747649,
+      "mastery_gap": 0.08939086751354663
+    },
+    "high_gaming": {
+      "description": "Harder + elevated guessing / gaming.",
+      "in_family": false,
+      "overall_pass": true,
+      "passed": {
+        "mean_mastery": true,
+        "bottom_quartile_mastery": true,
+        "retention": true,
+        "opportunities_per_skill": true
+      },
+      "deltas": {
+        "mean_mastery": 0.02028931449065019,
+        "bottom_quartile_mastery": 0.02256818289531004,
+        "retention": 0.015968873596686528,
+        "opportunities_per_skill": 0.199242424242426
+      },
+      "recovered_shift": 0.8,
+      "true_shift": 0.6,
+      "retention_gap": 0.10821335471530302,
+      "mastery_gap": 0.11253218172338142
+    },
+    "slow_acquisition": {
+      "description": "Needs more support: low learning rate, high slip.",
+      "in_family": true,
+      "overall_pass": true,
+      "passed": {
+        "mean_mastery": true,
+        "bottom_quartile_mastery": true,
+        "retention": true,
+        "opportunities_per_skill": true
+      },
+      "deltas": {
+        "mean_mastery": 0.009950451672170568,
+        "bottom_quartile_mastery": 0.02202231689041323,
+        "retention": 0.008167170025383363,
+        "opportunities_per_skill": 0.04637445887445857
+      },
+      "recovered_shift": 0.25,
+      "true_shift": 0.6,
+      "retention_gap": 0.027236325429716657,
+      "mastery_gap": 0.0047831001568298115
+    }
+  },
+  "sensitivity": {
+    "sweeps": {
+      "real_shift": [
+        {
+          "value": 0.3,
+          "retention_gap": 0.00014090043924230855,
+          "recovered_shift": 0.35
+        },
+        {
+          "value": 0.6,
+          "retention_gap": 0.013959581809493526,
+          "recovered_shift": 0.6
+        },
+        {
+          "value": 0.9,
+          "retention_gap": 0.0019725147616934113,
+          "recovered_shift": 0.95
+        }
+      ],
+      "tail_fraction": [
+        {
+          "value": 0.0,
+          "retention_gap": 0.02814357598453887,
+          "recovered_shift": 0.65
+        },
+        {
+          "value": 0.15,
+          "retention_gap": 0.013959581809493526,
+          "recovered_shift": 0.6
+        },
+        {
+          "value": 0.3,
+          "retention_gap": 0.013407704843790613,
+          "recovered_shift": 0.65
+        }
+      ],
+      "cohort_shape": [
+        {
+          "value": "uniform_harder",
+          "retention_gap": 0.02814357598453887,
+          "recovered_shift": 0.65
+        },
+        {
+          "value": "forgetting_tail",
+          "retention_gap": 0.013959581809493526,
+          "recovered_shift": 0.6
+        },
+        {
+          "value": "bimodal",
+          "retention_gap": 0.0756383858747649,
+          "recovered_shift": 0.3
+        },
+        {
+          "value": "high_gaming",
+          "retention_gap": 0.10821335471530302,
+          "recovered_shift": 0.8
+        }
+      ]
+    },
+    "retention_gap_min": 0.00014090043924230855,
+    "retention_gap_max": 0.10821335471530302
+  },
+  "bootstrap_ci": {
+    "n_boot": 12,
+    "recovered_shift": {
+      "mean": 0.5666666666666665,
+      "lo": 0.5,
+      "hi": 0.63625
+    },
+    "retention_gap": {
+      "mean": 0.03225607231659398,
+      "lo": 0.004235980363610465,
+      "hi": 0.05915747329865032
+    }
+  },
+  "live_data_hook": null
 }

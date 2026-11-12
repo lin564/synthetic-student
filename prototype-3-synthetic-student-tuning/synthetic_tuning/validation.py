@@ -73,20 +73,32 @@ def tune(pop: dict, base_seed: int) -> dict:
     }
 
 
-def within_range_test(syn: dict, real: dict, eval_seed: int = 999) -> dict:
-    """Tune on synthetic and on real; evaluate both on the real cohort;
-    check the synthetic-tuned engine is within range on aggregate outcomes."""
+def _avg_eval(real: dict, thr: dict, seeds) -> tuple:
+    """Evaluate one tuned engine on the real cohort over several resamples;
+    return (mean per outcome, std per outcome)."""
+    runs = [run_cohort(real, s, ft_thr=thr["ft_thr"], scaf_thr=thr["scaf_thr"])
+            for s in seeds]
+    mean = {k: float(np.mean([r[k] for r in runs])) for k in OUTCOME_KEYS}
+    std = {k: float(np.std([r[k] for r in runs])) for k in OUTCOME_KEYS}
+    return mean, std
+
+
+def within_range_test(syn: dict, real: dict, eval_seed: int = 999,
+                      n_eval: int = 12) -> dict:
+    """Tune on synthetic and on real; evaluate both on the real cohort over
+    `n_eval` resamples; check the synthetic-tuned engine is within range on
+    aggregate outcomes. The deltas carry a resample std (a confidence band)."""
     syn_tuned = tune(syn, base_seed=100)
     real_tuned = tune(real, base_seed=200)
 
-    eval_syn = run_cohort(real, eval_seed,
-                          ft_thr=syn_tuned["ft_thr"], scaf_thr=syn_tuned["scaf_thr"])
-    eval_real = run_cohort(real, eval_seed,
-                           ft_thr=real_tuned["ft_thr"], scaf_thr=real_tuned["scaf_thr"])
+    seeds = range(eval_seed, eval_seed + n_eval)
+    eval_syn, std_syn = _avg_eval(real, syn_tuned, seeds)
+    eval_real, std_real = _avg_eval(real, real_tuned, seeds)
 
-    deltas, passed = {}, {}
+    deltas, delta_std, passed = {}, {}, {}
     for k in OUTCOME_KEYS:
         deltas[k] = abs(eval_syn[k] - eval_real[k])
+        delta_std[k] = max(std_syn[k], std_real[k])
         passed[k] = deltas[k] <= WITHIN_RANGE[k]
 
     return {
@@ -95,8 +107,10 @@ def within_range_test(syn: dict, real: dict, eval_seed: int = 999) -> dict:
         "eval_syn": eval_syn,
         "eval_real": eval_real,
         "deltas": deltas,
+        "delta_std": delta_std,
         "passed": passed,
         "overall_pass": all(passed.values()),
+        "n_eval": n_eval,
         "curves": {"syn": syn_tuned, "real": real_tuned},
     }
 
@@ -128,36 +142,48 @@ def transfer_test(syn: dict, real: dict, tuned_scaf: float,
     }
 
 
-def aggregate_feedback(real: dict, ft_thr: float, base_seed: int = 300,
-                       max_shift: float = 1.2, step: float = 0.05,
-                       tol: float = 0.01) -> dict:
-    """Use ONE aggregate number from the real cohort -- its fast-track firing
-    rate -- to re-ground the synthetic population's difficulty. No individual
-    record is read."""
-    real_ft = float(np.mean([run_cohort(real, 200 + k, ft_thr=ft_thr)["ft_rate"]
-                             for k in range(5)]))
-
-    shift = 0.0
-    recovered = 0.0
+def reground_to_rate(real_ft_rate: float, ft_thr: float, base_seed: int = 300,
+                     max_shift: float = 1.2, step: float = 0.05,
+                     tol: float = 0.01, true_shift: float = REAL_SHIFT) -> dict:
+    """Given ONE aggregate number -- a cohort's fast-track firing rate -- find
+    the synthetic difficulty shift whose own fast-track rate best matches it.
+    This is the whole feedback loop, and it never reads an individual record.
+    The number can come from a simulated real cohort or a real pilot (see
+    real_data). The search scans the whole range and takes the closest match,
+    so it is unbiased rather than stopping at the first point within tolerance."""
     trace = []
+    best_shift, best_diff = 0.0, float("inf")
+    shift = 0.0
     while shift <= max_shift + 1e-9:
         syn = sample_population(200, seed=1, shift=shift)
         syn_ft = float(np.mean([run_cohort(syn, base_seed + k, ft_thr=ft_thr)["ft_rate"]
                                 for k in range(3)]))
         trace.append((round(shift, 3), syn_ft))
-        if abs(syn_ft - real_ft) <= tol:
-            recovered = shift
-            break
-        recovered = shift
+        diff = abs(syn_ft - real_ft_rate)
+        if diff < best_diff:
+            best_diff, best_shift = diff, shift
         shift += step
 
     return {
-        "real_ft_rate": real_ft,
-        "recovered_shift": recovered,
-        "true_shift": REAL_SHIFT,
+        "real_ft_rate": real_ft_rate,
+        "recovered_shift": round(best_shift, 3),
+        "match_error": best_diff,
+        "within_tol": best_diff <= tol,
+        "true_shift": true_shift,
         "trace": trace,
         "n_aggregates_used": 1,
     }
+
+
+def aggregate_feedback(real: dict, ft_thr: float, base_seed: int = 300,
+                       max_shift: float = 1.2, step: float = 0.05,
+                       tol: float = 0.01) -> dict:
+    """Measure the real cohort's fast-track firing rate (one number) and feed it
+    back through `reground_to_rate` to re-ground the synthetic population."""
+    real_ft = float(np.mean([run_cohort(real, 200 + k, ft_thr=ft_thr)["ft_rate"]
+                             for k in range(5)]))
+    return reground_to_rate(real_ft, ft_thr, base_seed=base_seed,
+                            max_shift=max_shift, step=step, tol=tol)
 
 
 def caveat_demo(real: dict, recovered_shift: float, base_seed: int = 400) -> dict:
@@ -176,3 +202,31 @@ def caveat_demo(real: dict, recovered_shift: float, base_seed: int = 400) -> dic
         "real_retention": real_agg["retention"],
         "retention_gap": abs(syn_agg["retention"] - real_agg["retention"]),
     }
+
+
+def run_scenarios(syn: dict, names=None) -> dict:
+    """Run the whole test suite against each stand-in real-cohort scenario and
+    summarise where synthetic tuning holds and where it strains."""
+    from . import scenarios as sc
+    if names is None:
+        names = list(sc.SCENARIOS.keys())
+
+    out = {}
+    for name in names:
+        builder, desc, in_family = sc.SCENARIOS[name]
+        real = builder()
+        wr = within_range_test(syn, real)
+        af = aggregate_feedback(real, wr["syn_tuned"]["ft_thr"])
+        cv = caveat_demo(real, af["recovered_shift"])
+        out[name] = {
+            "description": desc,
+            "in_family": in_family,
+            "overall_pass": wr["overall_pass"],
+            "passed": wr["passed"],
+            "deltas": wr["deltas"],
+            "recovered_shift": af["recovered_shift"],
+            "true_shift": af["true_shift"],
+            "retention_gap": cv["retention_gap"],
+            "mastery_gap": cv["mastery_gap"],
+        }
+    return out

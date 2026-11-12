@@ -1,16 +1,18 @@
 # Prototype 3 — Synthetic Student Tuning: results
 
-_Generated 2026-11-11 by `run.py`. No real student data used._
+_Generated 2026-11-12 by `run.py`. No real student data used._
 
-ACE is developed and calibrated on **simulated** middle schoolers. Real
-student data would be needed only for low-volume **aggregate** validation,
-never for model development. This report is the output of that harness.
+ACE is developed and calibrated on **simulated** middle schoolers. Real student
+data would be needed only for low-volume **aggregate** validation, never for
+model development. Each learner is an agent with **six** literature-grounded
+parameters (prior knowledge, learning rate, slip, guessing, hint-seeking,
+forgetting), and the skill sequence is cumulative — a mastered prerequisite
+raises the effective prior on the next skill.
 
 ## Pre-registered "within range" criterion
 
-Set **before** running (per the write-up's instruction). Synthetic-tuned ACE,
-evaluated on the real cohort, must match real-tuned ACE on every aggregate
-outcome to within:
+Set **before** running. Synthetic-tuned ACE, evaluated on the real cohort, must
+match real-tuned ACE on every aggregate outcome to within:
 
 | outcome | tolerance |
 |---|---|
@@ -21,73 +23,108 @@ outcome to within:
 
 ## Test 1 — Within range  →  **PASS**
 
-Both engines were tuned to the same design-intent firing rates
-(fast-track 15% of encounters, scaffold 35%), then
-**both evaluated on the real cohort**. Only aggregate outcomes are compared.
+Both engines tuned to the same design-intent firing rates, both evaluated on the
+real cohort over 12 resamples (the ± is the resample band).
 
-- Synthetic-tuned thresholds: fast-track **0.92**, scaffold **0.75**
-- Real-tuned thresholds: fast-track **0.70**, scaffold **0.80**
+- Synthetic-tuned: fast-track **0.92**, scaffold **0.75**
+- Real-tuned: fast-track **0.70**, scaffold **0.80**
 
-| Aggregate outcome | synthetic-tuned | real-tuned | Δ | tolerance | within range |
+| Aggregate outcome | synthetic-tuned | real-tuned | Δ (± resample) | tolerance | within range |
 |---|---|---|---|---|---|
-| mean_mastery | 0.741 | 0.744 | 0.003 | ±0.03 | ✅ |
-| bottom_quartile_mastery | 0.622 | 0.636 | 0.014 | ±0.05 | ✅ |
-| retention | 0.550 | 0.552 | 0.002 | ±0.03 | ✅ |
-| opportunities_per_skill | 10.801 | 10.652 | 0.149 | ±1 | ✅ |
-
-The engine built with **zero** student data lands within range of the engine
-that would have required real pilot records.
+| mean_mastery | 0.743 | 0.731 | 0.012 ± 0.007 | ±0.03 | ✅ |
+| bottom_quartile_mastery | 0.630 | 0.620 | 0.010 ± 0.016 | ±0.05 | ✅ |
+| retention | 0.557 | 0.548 | 0.009 ± 0.006 | ±0.03 | ✅ |
+| opportunities_per_skill | 10.832 | 10.634 | 0.198 ± 0.095 | ±1 | ✅ |
 
 ## Test 2 — Transfer
 
-An improvement found purely on synthetic data — a better scaffold threshold,
-chosen to lift the strugglers (bottom-quartile mastery) without exceeding a
-40% intervention budget — moved from **0.75** to **0.70**:
+A scaffold improvement found purely on synthetic data moved
+**0.75** → **0.70**:
 
-| cohort | bottom-quartile mastery (tuned) | (improved) | gain |
+| cohort | bottom-quartile (tuned) | (improved) | gain |
 |---|---|---|---|
-| synthetic | 0.877 | 0.890 | +0.013 |
-| real | 0.630 | 0.641 | +0.011 |
+| synthetic | 0.882 | 0.890 | +0.008 |
+| real | 0.644 | 0.663 | +0.019 |
 
-The same change helps the real cohort — **no individual record left the
-district** to find it. Transfers: **True**.
+No individual record left the district to find it. Transfers: **True**.
 
 ## Test 3 — Aggregate-only feedback
 
-The only thing the engineering stream consumed from the real world was **one
-number**: the real cohort's fast-track firing rate = **0.046**.
-Feeding it back (nudging the synthetic population's difficulty until its own
-fast-track rate matched) recovered a difficulty shift of
-**0.55**, against a true shift of **0.60** — the
-synthetic prior re-grounds itself from a single aggregate, not from records.
+One number — the real cohort's fast-track firing rate = **0.051** —
+re-grounds the synthetic population's difficulty to a shift of
+**0.60** against a true **0.60** (match error
+0.003). The synthetic prior re-grounds itself from a single aggregate.
+
+## Rigor 1 — Parameter recovery
+
+Does the aggregate-only loop really identify a cohort's difficulty, or just fit
+noise? Recovering a range of **known** shifts from one number each:
+
+| true shift | recovered |
+|---|---|
+| 0.0 | 0.00 ± 0.00 |
+| 0.3 | 0.28 ± 0.06 |
+| 0.6 | 0.58 ± 0.05 |
+| 0.9 | 0.87 ± 0.02 |
+
+**Mean absolute error = 0.017.** The one-number loop recovers true
+difficulty across the range — it is measuring something real.
+
+## Rigor 2 — Scenario sweep
+
+The core demo uses one stand-in real cohort. Reality comes in more shapes, so
+the whole test is re-run against five:
+
+| scenario | kind | within-range | recovered shift | retention gap |
+|---|---|---|---|---|
+| uniform_harder | in family | ✅ PASS | 0.65 | 0.028 |
+| forgetting_tail | mis-specified | ✅ PASS | 0.60 | 0.014 |
+| bimodal | mis-specified | ✅ PASS | 0.30 | 0.076 |
+| high_gaming | mis-specified | ✅ PASS | 0.80 | 0.108 |
+| slow_acquisition | in family | ✅ PASS | 0.25 | 0.027 |
+
+**Synthetic tuning holds on the immediate aggregate outcomes for every shape.**
+The individual-level blind spot (retention gap) varies with the shape and is
+largest for **high_gaming** (0.108) — a mis-specified cohort the
+unimodal synthetic priors cannot express. This is the caveat, quantified across
+scenarios: matching the aggregate is not being right about individuals.
+
+## Rigor 3 — Sensitivity
+
+One-at-a-time sweeps of the (unknown) real-cohort assumptions. The within-range
+result is robust; the quantity that moves is the retention gap, which ranges
+**0.000–0.108** across everything tried. The
+conclusions depend on the forgetting-tail assumption, not on cohort hardness —
+which is exactly the thing a real pilot would pin down.
+
+## Rigor 4 — Bootstrap confidence intervals
+
+Over 12 real-cohort resamples (95% intervals):
+
+- recovered shift: **0.57**  [0.50, 0.64]
+- retention gap: **0.032**  [0.004, 0.059]
 
 ## Caveat (state this in class)
 
 A synthetic population tuned to match real aggregates can still be wrong about
-individuals in ways that only show up in real classrooms. Here the stand-in
-real cohort carries a high-forgetting tail (absenteeism / summer slide) that
-the synthetic model's priors cannot express. After matching the aggregate:
+individuals in ways that only show up in real classrooms. The scenario sweep
+makes this concrete: tuning holds on immediate outcomes everywhere, but the
+retention gap — invisible to the aggregate the feedback loop used — is real and
+largest for the mis-specified cohorts. That is why the two streams validate each
+other rather than one replacing the other.
 
-- mean-mastery gap (the matched aggregate): **0.020**
-- retention gap (the blind spot): **0.041**
+## Live-data hook
 
-The retention gap is the larger one, and it is invisible to the aggregate the
-feedback loop used. That is exactly why the two streams validate each other
-rather than one replacing the other.
+The aggregate-only feedback loop can read a real cohort's one number from a
+district file (`synthetic_tuning/real_data.py`, with worked examples in
+`examples/`). It enforces a minimum cohort size and refuses any file carrying a
+per-student field, so only an aggregate is ever consumed. Run:
+`python run.py --real-aggregate examples/real_aggregate.json`.
 
-## What this answers
+## Sources
 
-The obvious objection to the two-stream model — *if QuestSim never gets
-student data, how does the product get better?* — has a concrete answer: the
-brain is built and tuned in simulation; real students only ever confirm, in
-aggregate, that it works.
-
-## Sources (grounding for the agent parameters)
-
-- Corbett & Anderson (1995), *Knowledge tracing* — BKT: prior, learn, slip, guess, the 0.95 mastery threshold.
-- Newell & Rosenbloom (1981), *Mechanisms of skill acquisition and the power law of practice* — the learning-rate parameter.
-- Aleven, McLaren, Roll & Koedinger (2006), *help-seeking and help-avoidance* — the hint-seeking parameter.
-- Ebbinghaus (1885) / Pavlik & Anderson (2005), *memory decay and spacing* — the forgetting-rate parameter.
-
-See `output/aggregates.json` and `output/calibration.csv` for the raw numbers,
-and `figures/` for the plots.
+- Bayesian Knowledge Tracing: Corbett & Anderson (1995).
+- Power law of practice: Newell & Rosenbloom (1981).
+- Gaming / guessing: Baker, Corbett, Roll & Koedinger (2008).
+- Help-seeking: Aleven, McLaren, Roll & Koedinger (2006).
+- Memory decay: Ebbinghaus (1885); Pavlik & Anderson (2005).

@@ -27,6 +27,7 @@ from __future__ import annotations
 import numpy as np
 
 from .skills import SKILLS, MAX_OPP, MASTERY, FT_CHECK, SCAF_WARMUP, EWMA_ALPHA
+from .learners import PREREQ_WEIGHT
 
 
 def run_student(pop: dict, i: int, rng: np.random.Generator,
@@ -46,16 +47,26 @@ def run_student(pop: dict, i: int, rng: np.random.Generator,
     prior = pop["prior"][i]
     learn_mult = pop["learn_mult"][i]
     slip_mult = pop["slip_mult"][i]
+    guess_mult = pop["guess_mult"][i] if "guess_mult" in pop else 1.0
     hint_prop = pop["hint"][i]
     decay = pop["decay"][i]
 
+    prev_mastery = None  # the previous skill's final mastery, for the prereq boost
+
     for s, (_name, p) in enumerate(SKILLS):
-        guess = min(0.45, p["guess"])
+        guess = min(0.45, p["guess"] * guess_mult)
         slip = min(0.45, p["slip"] * slip_mult)
         learn = min(0.60, p["learn"] * learn_mult)
 
-        known = rng.random() < prior        # true latent knowledge state
-        pL = prior                           # ACE's BKT mastery estimate
+        # Cumulative knowledge: a mastered prerequisite raises the effective
+        # prior on this skill; a shaky one lowers it.
+        if prev_mastery is None:
+            eff_prior = prior
+        else:
+            eff_prior = min(0.95, max(0.02, prior + PREREQ_WEIGHT * (prev_mastery - 0.5)))
+
+        known = rng.random() < eff_prior    # true latent knowledge state
+        pL = eff_prior                       # ACE's BKT mastery estimate
         struggle = 0.0                       # EWMA of recent errors
         hints = 0
         last_err = 0
@@ -113,6 +124,7 @@ def run_student(pop: dict, i: int, rng: np.random.Generator,
         mastery[s] = pL
         # Delayed retention probe: mastery decays between acquisition and recall.
         retention[s] = pL * float(np.exp(-decay))
+        prev_mastery = pL  # carry forward for the next skill's prerequisite boost
 
     return {
         "mastery": mastery,

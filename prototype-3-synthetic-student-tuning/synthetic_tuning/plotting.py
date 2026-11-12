@@ -51,10 +51,14 @@ def plot_population(syn, real, path):
         "prior": "Prior knowledge  P(L0)",
         "learn_mult": "Learning-rate multiplier",
         "slip_mult": "Slip multiplier (errors)",
+        "guess_mult": "Guess multiplier (gaming)",
         "hint": "Hint-seeking propensity",
         "decay": "Forgetting rate",
     }
-    fig, axes = plt.subplots(2, 3, figsize=(11, 6))
+    n_params = len(PARAMS)
+    ncols = 3
+    nrows = (n_params + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(11, 3 * nrows))
     axes = axes.ravel()
     for ax, p in zip(axes, PARAMS):
         lo = min(syn[p].min(), real[p].min())
@@ -62,13 +66,16 @@ def plot_population(syn, real, path):
         bins = np.linspace(lo, hi, 22)
         ax.hist(syn[p], bins=bins, color=SYN_C, alpha=0.65, label="synthetic")
         ax.hist(real[p], bins=bins, color=REAL_C, alpha=0.55, label="real (stand-in)")
-        ax.set_title(titles[p])
+        ax.set_title(titles.get(p, p))
         ax.set_yticks([])
-    axes[-1].axis("off")
+    for ax in axes[n_params:]:  # blank any unused panels
+        ax.axis("off")
     h, l = axes[0].get_legend_handles_labels()
-    axes[-1].legend(h, l, loc="center", frameon=False, fontsize=12)
-    fig.suptitle("Synthetic learner population vs. the stand-in real cohort",
-                 fontsize=14, fontweight="bold")
+    fig.legend(h, l, loc="upper center", frameon=False, fontsize=11, ncol=2,
+               bbox_to_anchor=(0.5, 0.055))
+    fig.suptitle("Synthetic learner population vs. the stand-in real cohort "
+                 "(six grounded parameters)", fontsize=14, fontweight="bold")
+    fig.subplots_adjust(bottom=0.12)
     return _save(plt, path)
 
 
@@ -102,12 +109,17 @@ def plot_within_range(res, tol, path):
     fig, (axL, axR) = plt.subplots(
         1, 2, figsize=(10.5, 5.4), gridspec_kw={"width_ratios": [3, 1]})
 
+    dstd = res.get("delta_std", {})
+
     def draw(ax, keys, labels, ymax):
         x = np.arange(len(keys))
         syn = [res["eval_syn"][k] for k in keys]
         real = [res["eval_real"][k] for k in keys]
-        ax.bar(x - w/2, syn, w, color=SYN_C, label="synthetic-tuned ACE")
-        ax.bar(x + w/2, real, w, color=REAL_C, label="real-tuned ACE")
+        errs = [dstd.get(k, 0) for k in keys]
+        ax.bar(x - w/2, syn, w, color=SYN_C, label="synthetic-tuned ACE",
+               yerr=errs, capsize=4, error_kw={"elinewidth": 1, "ecolor": "#6b7280"})
+        ax.bar(x + w/2, real, w, color=REAL_C, label="real-tuned ACE",
+               yerr=errs, capsize=4, error_kw={"elinewidth": 1, "ecolor": "#6b7280"})
         for i, k in enumerate(keys):
             ok = res["passed"][k]
             top = max(syn[i], real[i])
@@ -193,6 +205,77 @@ def plot_caveat(cv, path):
     return _save(plt, path)
 
 
+def plot_parameter_recovery(recovery, path):
+    plt = _mpl()
+    rows = recovery["rows"]
+    true = [r["true"] for r in rows]
+    rec = [r["recovered_mean"] for r in rows]
+    err = [r["recovered_std"] for r in rows]
+    fig, ax = plt.subplots(figsize=(7, 5.2))
+    hi = max(max(true), max(rec)) + 0.15
+    ax.plot([0, hi], [0, hi], ls="--", color=MUTED, lw=1.4, label="perfect recovery")
+    ax.errorbar(true, rec, yerr=err, fmt="o-", color=SYN_C, lw=2, ms=7, capsize=5,
+                label="recovered from one aggregate")
+    ax.set_xlabel("true cohort difficulty shift")
+    ax.set_ylabel("recovered shift")
+    ax.set_xlim(-0.05, hi); ax.set_ylim(-0.05, hi)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_title(f"The aggregate-only loop recovers true difficulty\n"
+                 f"mean absolute error = {recovery['mae']:.3f} over one number per cohort")
+    ax.legend(frameon=False, loc="upper left")
+    return _save(plt, path)
+
+
+def plot_scenarios(scenarios, path):
+    plt = _mpl()
+    names = list(scenarios.keys())
+    gaps = [scenarios[n]["retention_gap"] for n in names]
+    in_fam = [scenarios[n]["in_family"] for n in names]
+    passes = [scenarios[n]["overall_pass"] for n in names]
+    colors = [SYN_C if f else REAL_C for f in in_fam]
+    order = np.argsort(gaps)
+    names = [names[i] for i in order]; gaps = [gaps[i] for i in order]
+    colors = [colors[i] for i in order]; passes = [passes[i] for i in order]
+    fig, ax = plt.subplots(figsize=(8.5, 5))
+    bars = ax.barh(names, gaps, color=colors)
+    for b, g, ok in zip(bars, gaps, passes):
+        ax.text(g + 0.002, b.get_y() + b.get_height()/2,
+                f"{g:.3f}   within-range: {'PASS ✓' if ok else 'FAIL ✗'}",
+                va="center", fontsize=9.5,
+                color=GOOD_C if ok else "#b23b3b")
+    ax.set_xlabel("retention gap (the individual-level blind spot)")
+    ax.set_xlim(0, max(gaps) * 1.5)
+    import matplotlib.patches as mpatches
+    ax.legend(handles=[mpatches.Patch(color=SYN_C, label="inside synthetic family"),
+                       mpatches.Patch(color=REAL_C, label="mis-specified shape")],
+              frameon=False, loc="lower right")
+    ax.set_title("Across every cohort shape, synthetic tuning holds on immediate\n"
+                 "outcomes — but the retention blind spot varies with the shape")
+    return _save(plt, path)
+
+
+def plot_sensitivity(sens, path):
+    plt = _mpl()
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 4.6))
+    sh = sens["sweeps"]["real_shift"]
+    axL.plot([r["value"] for r in sh], [r["retention_gap"] for r in sh],
+             "o-", color=SYN_C, lw=2, ms=6, label="retention gap")
+    axL.plot([r["value"] for r in sh], [r["recovered_shift"] for r in sh],
+             "s--", color=REAL_C, lw=1.8, ms=6, label="recovered shift")
+    axL.plot([0.3, 0.9], [0.3, 0.9], ls=":", color=MUTED, lw=1, label="true shift")
+    axL.set_xlabel("real cohort difficulty shift"); axL.set_title("Sensitivity to cohort hardness")
+    axL.legend(frameon=False, fontsize=9)
+    tf = sens["sweeps"]["tail_fraction"]
+    axR.plot([r["value"] for r in tf], [r["retention_gap"] for r in tf],
+             "o-", color="#8a5cd0", lw=2, ms=6)
+    axR.set_xlabel("high-forgetting tail fraction")
+    axR.set_ylabel("retention gap")
+    axR.set_title("Sensitivity to the forgetting tail")
+    fig.suptitle("The within-range result is robust; the retention gap is what moves",
+                 fontsize=13, fontweight="bold")
+    return _save(plt, path)
+
+
 def all_figures(ctx, outdir):
     os.makedirs(outdir, exist_ok=True)
     p = lambda f: os.path.join(outdir, f)
@@ -213,4 +296,10 @@ def all_figures(ctx, outdir):
     paths["transfer"] = plot_transfer(ctx["tr"], p("05_transfer.png"))
     paths["feedback"] = plot_feedback(ctx["af"], p("06_aggregate_feedback.png"))
     paths["caveat"] = plot_caveat(ctx["cv"], p("07_caveat_retention.png"))
+    if "recovery" in ctx:
+        paths["recovery"] = plot_parameter_recovery(ctx["recovery"], p("08_parameter_recovery.png"))
+    if "scenarios" in ctx:
+        paths["scenarios"] = plot_scenarios(ctx["scenarios"], p("09_scenarios.png"))
+    if "sensitivity" in ctx:
+        paths["sensitivity"] = plot_sensitivity(ctx["sensitivity"], p("10_sensitivity.png"))
     return paths
