@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Diet Toggle — QuestSim admin</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --ink: #1b2330;
+    --ink-soft: #566075;
+    --ink-faint: #8a93a6;
+    --line: #e4e8ef;
+    --brand: #2f6fb0;
+    --brand-soft: #eaf2fb;
+    --good: #2e8b64;
+    --good-soft: #e7f4ee;
+    --warn: #c67c2b;
+    --warn-soft: #fbf1e3;
+    --lose: #b23b3b;
+    --lose-soft: #fbecec;
+    --fixed: #3a4556;
+    --radius: 14px;
+    --radius-sm: 9px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 28px 20px 72px; }
+
+  /* Admin chrome */
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 20px;
+  }
+  .logo {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: linear-gradient(135deg, #2f6fb0, #5aa0e0);
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 15px;
+  }
+  .topbar .crumbs { font-size: 13px; color: var(--ink-faint); }
+  .topbar .crumbs b { color: var(--ink); font-weight: 600; }
+  .topbar .tenant { margin-left: auto; font-size: 12.5px; color: var(--ink-soft);
+    background: var(--brand-soft); padding: 5px 11px; border-radius: 999px; }
+
+  h1 { font-size: 23px; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .lede { color: var(--ink-soft); font-size: 15px; max-width: 76ch; margin-bottom: 20px; }
+
+  /* Segmented toggle */
+  .toggle-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 18px;
+  }
+  .toggle-label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-faint); font-weight: 700; margin-bottom: 10px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .seg button {
+    font: inherit; cursor: pointer; text-align: left;
+    background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+    padding: 13px 15px; transition: all .15s ease; color: var(--ink);
+  }
+  .seg button:hover { border-color: #c2cede; }
+  .seg button .t { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .seg button .d { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+  .seg button[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft);
+    box-shadow: 0 0 0 3px rgba(47,111,176,.12); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .dot.full { background: var(--good); }
+  .dot.standard { background: var(--warn); }
+  .dot.minimal { background: var(--ink-faint); }
+
+  /* Two columns */
+  .cols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; margin-bottom: 18px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700;
+    color: var(--ink-faint); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .panel.left { border-top: 3px solid var(--brand); }
+  .panel.right { border-top: 3px solid var(--fixed); background: #fafbfd; }
+  .changes-flag { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--brand); background: var(--brand-soft); padding: 2px 8px; border-radius: 999px; }
+  .fixed-flag { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: #fff; background: var(--fixed); padding: 2px 8px; border-radius: 999px; }
+
+  .row { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .k { flex: none; width: 118px; font-size: 12.5px; color: var(--ink-faint); font-weight: 600;
+    padding-top: 1px; }
+  .row .v { font-size: 14px; }
+  .v ul { list-style: none; }
+  .v li { position: relative; padding-left: 18px; margin: 3px 0; }
+  .v li::before { content: "✓"; position: absolute; left: 0; color: var(--good); font-weight: 700; }
+  .v li.off { color: var(--ink-faint); }
+  .v li.off::before { content: "—"; color: var(--ink-faint); }
+
+  .guarantee { display: flex; flex-direction: column; gap: 14px; }
+  .g-item { display: flex; gap: 11px; align-items: flex-start; }
+  .g-item .ic { width: 26px; height: 26px; border-radius: 7px; flex: none; display: grid;
+    place-items: center; background: var(--good-soft); color: var(--good); font-size: 14px; }
+  .g-item .gt { font-weight: 600; font-size: 14px; }
+  .g-item .gd { font-size: 12.5px; color: var(--ink-soft); }
+  .retention-note { margin-top: 4px; font-size: 12.5px; color: var(--ink-soft);
+    background: #fff; border: 1px dashed var(--line); border-radius: var(--radius-sm); padding: 10px 12px; }
+
+  /* What's lost callout */
+  .lose {
+    border-radius: var(--radius); padding: 15px 17px; margin-bottom: 18px;
+    background: var(--lose-soft); border: 1px solid #f0c9c9; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .lose.none { background: var(--good-soft); border-color: #bfe3cf; }
+  .lose .ic { font-size: 18px; line-height: 1.3; flex: none; }
+  .lose .lt { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--lose); margin-bottom: 2px; }
+  .lose.none .lt { color: var(--good); }
+  .lose .ld { font-size: 14px; color: var(--ink); }
+
+  /* Data inventory */
+  .inv { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; }
+  .inv-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .inv-head h2 { font-size: 16px; }
+  .inv-head .sub { font-size: 12.5px; color: var(--ink-faint); }
+  .inv-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; }
+  .inv-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--ink-faint); font-weight: 700; padding: 8px 10px; border-bottom: 2px solid var(--line); }
+  .inv-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .inv-table tr:last-child td { border-bottom: 0; }
+  .field-name { font-weight: 600; }
+  .field-note { font-size: 12px; color: var(--ink-faint); }
+  .pill { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.on { background: var(--good-soft); color: var(--good); }
+  .pill.off { background: #eef1f5; color: var(--ink-faint); }
+  .cell-muted { color: var(--ink-faint); }
+
+  .oneliner { margin: 22px 0 0; padding: 16px 18px; border-radius: var(--radius);
+    background: #0f2033; color: #eaf1fb; font-size: 15px; }
+  .oneliner b { color: #fff; }
+  .test { margin-top: 14px; font-size: 13px; color: var(--ink-soft);
+    border-left: 3px solid var(--brand); padding: 4px 0 4px 14px; }
+  .test b { color: var(--ink); }
+
+  footer { margin-top: 26px; font-size: 12px; color: var(--ink-faint); text-align: center; }
+
+  @media (max-width: 760px) {
+    .cols { grid-template-columns: 1fr; }
+    .seg { grid-template-columns: 1fr; }
+    .row .k { width: 96px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo">Q</div>
+    <div class="crumbs">QuestSim admin · <b>Privacy &amp; Data</b> · Data Diet</div>
+    <div class="tenant">Tenant: Maple Grove USD</div>
+  </div>
+
+  <h1>Data Diet</h1>
+  <p class="lede">
+    Choose how much the <b>classroom stream</b> collects about each student. The tradeoff is
+    stated in plain language, and it only changes what <i>your teachers</i> see and how long
+    <i>your district</i> keeps it. What QuestSim retains is fixed at nothing, at every level.
+  </p>
+
+  <div class="toggle-card">
+    <div class="toggle-label">Collection level</div>
+    <div class="seg" id="seg">
+      <button data-level="full" aria-pressed="false">
+        <span class="t"><span class="dot full"></span>Full Adaptation</span>
+        <span class="d">Every signal ACE can use. Sharpest personalization.</span>
+      </button>
+      <button data-level="standard" aria-pressed="true">
+        <span class="t"><span class="dot standard"></span>Standard</span>
+        <span class="d">Mastery and hint counts. No fine-grained timing.</span>
+      </button>
+      <button data-level="minimal" aria-pressed="false">
+        <span class="t"><span class="dot minimal"></span>Minimal</span>
+        <span class="d">Right/wrong only. The smallest defensible footprint.</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="lose" id="lose">
+    <div class="ic" id="lose-ic">⚠️</div>
+    <div>
+      <div class="lt" id="lose-title">What the student loses at this level</div>
+      <div class="ld" id="lose-body"></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="panel left">
+      <h2>What your teachers see <span class="changes-flag">changes with level</span></h2>
+      <div class="row">
+        <div class="k">Teacher view</div>
+        <div class="v"><ul id="teacher-view"></ul></div>
+      </div>
+      <div class="row">
+        <div class="k">ACE can</div>
+        <div class="v"><ul id="ace-can"></ul></div>
+      </div>
+      <div class="row">
+        <div class="k">Retention</div>
+        <div class="v" id="retention"></div>
+      </div>
+    </div>
+
+    <div class="panel right">
+      <h2>What QuestSim gets <span class="fixed-flag">fixed · never changes</span></h2>
+      <div class="guarantee">
+        <div class="g-item">
+          <div class="ic">🏫</div>
+          <div><div class="gt">Stored in your Google Workspace</div>
+            <div class="gd">Written to your district tenant, under your existing Google agreement.</div></div>
+        </div>
+        <div class="g-item">
+          <div class="ic">👩‍🏫</div>
+          <div><div class="gt">Readable by your teachers</div>
+            <div class="gd">Read back client-side with the teacher's own token.</div></div>
+        </div>
+        <div class="g-item">
+          <div class="ic">🔒</div>
+          <div><div class="gt">QuestSim retains nothing</div>
+            <div class="gd">No student record ever lands on a QuestSim server, even transiently.</div></div>
+        </div>
+      </div>
+      <div class="retention-note">
+        This column reads the same at Full, Standard and Minimal. The toggle changes your
+        district's footprint — never QuestSim's, which is always zero.
+      </div>
+    </div>
+  </div>
+
+  <div class="inv">
+    <div class="inv-head">
+      <h2>Data inventory</h2>
+      <span class="sub" id="inv-sub"></span>
+    </div>
+    <table class="inv-table">
+      <thead>
+        <tr><th>Field</th><th>Collected</th><th>Lives in</th><th>QuestSim access</th></tr>
+      </thead>
+      <tbody id="inv-body"></tbody>
+    </table>
+  </div>
+
+  <div class="oneliner">
+    The one-line version for your privacy officer: <b>your teachers get the student data; we never do.</b>
+  </div>
+
+  <div class="test">
+    <b>Prototype test.</b> Put this screen in front of two or three district technology directors or
+    privacy officers and ask one question: could you sign a data processing agreement against this
+    <i>without a call to counsel?</i> If they still want the call, the language isn't plain enough.
+  </div>
+
+  <footer>
+    Prototype 1 of 3 · Data Diet Toggle · from “Wicked Problem Prototypes: Personalization Without the
+    Data Districts Can’t Defend” (Linda Bernard, Nov 2026). Illustrative mock — the data fields and
+    tradeoffs stand in for ACE’s real signal dependencies, which come from the engineering team.
+  </footer>
+
+</div>
+
+<script>
+// Each field: what it is, and whether it is collected at each level.
+// levels: full > standard > minimal
+const FIELDS = [
+  { name: "Answer correctness", note: "right / wrong per item",
+    full: true,  standard: true,  minimal: true },
+  { name: "Per-skill mastery vector", note: "the headline score per skill",
+    full: true,  standard: true,  minimal: true },
+  { name: "Hint usage (counts)", note: "how many hints were opened",
+    full: true,  standard: true,  minimal: false },
+  { name: "Response latency", note: "how long each answer took",
+    full: true,  standard: false, minimal: false },
+  { name: "Hint timing", note: "when in the attempt a hint was opened",
+    full: true,  standard: false, minimal: false },
+  { name: "Session behavior over time", note: "pace and effort across sessions",
+    full: true,  standard: false, minimal: false },
+  { name: "Raw item sequence", note: "the ordered clickstream",
+    full: true,  standard: false, minimal: false },
+];
+
+const LEVELS = {
+  full: {
+    teacherView: [
+      "Per-skill mastery, with where each student stalled",
+      "Guessing flagged from fast wrong answers",
+      "Hint-reliance and pace across sessions",
+    ],
+    aceCan: [
+      "Detect guessing from response latency",
+      "Adapt on hint timing, not just hint counts",
+      "Fast-track and scaffold on fine-grained signals",
+    ],
+    retention: "Your district's policy — default: end of school year. If you delete it, it is gone.",
+    loses: null,
+  },
+  standard: {
+    teacherView: [
+      "Per-skill mastery, with where each student stalled",
+      "Hint-reliance by count (not timing)",
+    ],
+    aceCan: [
+      "Scaffold and fast-track on mastery and hint counts",
+      "Flag persistent wrong-answer patterns",
+    ],
+    retention: "Your district's policy — default: end of school year. If you delete it, it is gone.",
+    loses: "Response latency and hint timing aren't tracked, so ACE can't tell a confident correct answer from a lucky fast guess. Guessing detection falls back to wrong-answer patterns.",
+  },
+  minimal: {
+    teacherView: [
+      "Per-skill mastery as reached / not-yet",
+      "Which skills a student hasn't cleared",
+    ],
+    aceCan: [
+      "Scaffold on wrong answers only",
+      "Mark a skill mastered from correctness alone",
+    ],
+    retention: "Your district's policy — default: deleted at end of unit. If you delete it, it is gone.",
+    loses: "Hint timing is not tracked, so ACE cannot detect guessing; scaffolds trigger on wrong answers only. No latency, no behavior-over-time — the smallest footprint a district can defend.",
+  },
+};
+
+const OFFTEXT = {
+  full: "", // nothing off at full
+};
+
+let current = "standard";
+
+function render(level) {
+  current = level;
+  const cfg = LEVELS[level];
+
+  // toggle pressed state
+  document.querySelectorAll("#seg button").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.level === level ? "true" : "false");
+  });
+
+  // teacher view + ace can
+  document.getElementById("teacher-view").innerHTML =
+    cfg.teacherView.map(t => `<li>${t}</li>`).join("");
+  document.getElementById("ace-can").innerHTML =
+    cfg.aceCan.map(t => `<li>${t}</li>`).join("");
+  document.getElementById("retention").textContent = cfg.retention;
+
+  // what's lost
+  const loseEl = document.getElementById("lose");
+  const loseIc = document.getElementById("lose-ic");
+  const loseTitle = document.getElementById("lose-title");
+  const loseBody = document.getElementById("lose-body");
+  if (cfg.loses) {
+    loseEl.classList.remove("none");
+    loseIc.textContent = "⚠️";
+    loseTitle.textContent = "What the student loses at this level";
+    loseBody.textContent = cfg.loses;
+  } else {
+    loseEl.classList.add("none");
+    loseIc.textContent = "✓";
+    loseTitle.textContent = "Nothing is narrowed at this level";
+    loseBody.textContent = "Full Adaptation keeps every signal ACE can use. Step down only as far as your district is comfortable — each step names exactly what it costs.";
+  }
+
+  // inventory
+  const onCount = FIELDS.filter(f => f[level]).length;
+  document.getElementById("inv-sub").textContent =
+    `${onCount} of ${FIELDS.length} fields collected at “${labelFor(level)}” · all of it in your tenant, none at QuestSim`;
+  document.getElementById("inv-body").innerHTML = FIELDS.map(f => {
+    const on = f[level];
+    return `<tr>
+      <td><div class="field-name">${f.name}</div><div class="field-note">${f.note}</div></td>
+      <td><span class="pill ${on ? "on" : "off"}">${on ? "Collected" : "Not collected"}</span></td>
+      <td class="${on ? "" : "cell-muted"}">${on ? "Your Google Workspace" : "—"}</td>
+      <td class="cell-muted">Never</td>
+    </tr>`;
+  }).join("");
+}
+
+function labelFor(level) {
+  return { full: "Full Adaptation", standard: "Standard", minimal: "Minimal" }[level];
+}
+
+document.getElementById("seg").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-level]");
+  if (btn) render(btn.dataset.level);
+});
+
+render(current);
+</script>
+</body>
+</html>

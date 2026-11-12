@@ -1,0 +1,34 @@
+{
+  "generated": "2026-11-12",
+  "sessions": 1400,
+  "decision_points": 9607,
+  "overall_divergence": 0.009992713646299573,
+  "trigger_divergence": 0.07317073170731707,
+  "fast_track": {
+    "total": 373,
+    "diverged": 26,
+    "rate": 0.06970509383378017
+  },
+  "scaffold": {
+    "total": 939,
+    "diverged": 70,
+    "rate": 0.07454739084132056
+  },
+  "causes": {
+    "latency": 26,
+    "hint_timing": 56,
+    "other": 14
+  },
+  "threshold": 0.05,
+  "passes": false,
+  "footprint": {
+    "raw_bytes": 646229,
+    "mastery_bytes": 35000,
+    "events": 9607,
+    "reduction_x": 18.463685714285713,
+    "pct_leaving": 5.416036730013664
+  },
+  "trigger_divergence_mean": 0.08208170726365556,
+  "trigger_divergence_std": 0.007700673743815922,
+  "n_resamples": 5
+}

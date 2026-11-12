@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype 2 — Mastery-Only Export</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif; max-width:860px;
+    margin:0 auto; padding:32px 20px 80px; color:#1b2330; background:#fbfcfe; line-height:1.55; }
+  h1 { font-size:1.7rem; margin-bottom:4px; }
+  .sub { color:#6b7280; margin-top:0; }
+  h2 { margin-top:2.2rem; border-bottom:2px solid #eef1f5; padding-bottom:4px; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:.95rem; }
+  th,td { text-align:left; padding:7px 10px; border-bottom:1px solid #e6e9ef; }
+  th { color:#6b7280; font-weight:600; }
+  figure { margin:18px 0; } img { max-width:100%; border:1px solid #e6e9ef; border-radius:10px; }
+  figcaption { color:#6b7280; font-size:.88rem; margin-top:6px; }
+  .kpis { display:flex; flex-wrap:wrap; gap:12px; margin:14px 0; }
+  .kpi { flex:1 1 150px; background:#fff; border:1px solid #e6e9ef; border-radius:12px; padding:12px 14px; }
+  .kpi b { display:block; font-size:1.5rem; } .kpi span { color:#6b7280; font-size:.82rem; }
+  code { background:#f0f2f6; padding:1px 5px; border-radius:5px; }
+  blockquote { border-left:4px solid #2f6fb0; margin:14px 0; padding:4px 16px; background:#eef5fc;
+    color:#213a52; border-radius:0 8px 8px 0; }
+</style></head><body>
+<h1>Prototype 2 — Mastery-Only Export</h1>
+<p class="sub">ACE adapts on the device; only the per-skill mastery vector leaves. A replay
+harness measures how much adaptation depends on the raw trail that would otherwise be sent to a
+server. <i>Generated 2026-11-12; no real student data used.</i></p>
+
+<div class="kpis">
+  <div class="kpi"><b>99.0%</b><span>of all adaptation decisions identical mastery-only</span></div>
+  <div class="kpi"><b style="color:#c67c2b">8.2%</b><span>of triggers diverge (threshold 5%)</span></div>
+  <div class="kpi"><b>18×</b><span>less data leaves the device</span></div>
+  <div class="kpi"><b>2</b><span>signals explain the divergence: latency &amp; hint timing</span></div>
+</div>
+
+<h2>What the harness does</h2>
+<p>It replays the same 1400 fixed logged sessions through two models — a
+<b>server</b> model that uses the full raw trail (correctness, latency, hint timing) and an
+<b>on-device</b> model that uses only the correctness-based mastery vector — and records every
+adaptation decision each makes.</p>
+
+<h2>Result</h2>
+<table>
+<tr><th>metric</th><th>value</th></tr>
+<tr><td>every adaptation decision that diverges</td><td>1.00% (≈99.0% identical)</td></tr>
+<tr><td>scaffold + fast-track triggers that diverge</td><td><b>8.21% ± 0.77%</b></td></tr>
+<tr><td>— fast-track triggers</td><td>6.97% (26/373)</td></tr>
+<tr><td>— scaffold triggers</td><td>7.45% (70/939)</td></tr>
+<tr><td>vs the 5% pre-registered threshold</td><td style="color:#c67c2b"><b>EXCEEDS threshold (does not hold)</b></td></tr>
+</table>
+<figure><img src="../figures/01_divergence_summary.png" alt="Overall decisions agree ~99%; the scaffold+fast-track triggers carry the residual."/><figcaption>Overall decisions agree ~99%; the scaffold+fast-track triggers carry the residual.</figcaption></figure>
+<figure><img src="../figures/02_divergence_by_trigger.png" alt="The divergence splits between the two trigger types and their two signals."/><figcaption>The divergence splits between the two trigger types and their two signals.</figcaption></figure>
+
+<h2>Which signals the server model was using</h2>
+<p>Exceeding the bar is the prototype doing its job: it <b>names</b> the signals the server model
+depends on — response latency (lucky-guess detection on fast-track) and hint timing (early-hint
+scaffolds). These are exactly the fields Prototype 1's Standard and Minimal levels drop.</p>
+<figure><img src="../figures/03_divergence_causes.png" alt="Each divergence traced to the fine-grained signal that caused it."/><figcaption>Each divergence traced to the fine-grained signal that caused it.</figcaption></figure>
+
+<h2>What leaves the device</h2>
+<blockquote>Only 5.42% of the raw trail ever leaves — a 18× reduction. What
+leaves is a handful of mastery numbers, not the clickstream. COPPA and FERPA care about exactly
+this: what leaves the student's machine, not what the model computes locally.</blockquote>
+<figure><img src="../figures/04_data_footprint.png" alt="Raw event trail (sent to a server today) vs the mastery vector (all that leaves)."/><figcaption>Raw event trail (sent to a server today) vs the mastery vector (all that leaves).</figcaption></figure>
+
+<p class="sub">Bayesian Knowledge Tracing: Corbett &amp; Anderson (1995). Run on synthetic sessions,
+which Prototype 3 can supply; the real signal weights come from the engineering team.</p>
+</body></html>

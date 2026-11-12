@@ -1,0 +1,4 @@
+# Prototype 2 — Mastery-Only Export
+# Core harness needs only numpy; matplotlib is used by run.py to render figures.
+numpy>=1.24
+matplotlib>=3.6
