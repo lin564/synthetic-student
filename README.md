@@ -50,6 +50,16 @@ They interlock: **Prototype 2's divergence** falls on exactly the two signals
 **Prototype 1's** Standard and Minimal levels drop, and **Prototype 3** can
 supply the synthetic logged sessions **Prototype 2** replays.
 
+## Synthetic Persona Lab (interactive)
+
+A browser port of the Prototype 3 model, turned into a usable tool:
+[`persona-lab/`](persona-lab/) is a self-contained page for **testing
+educational apps and games against the synthetic persona population** — a
+population explorer, a no-code activity runner, a JS API sandbox
+(`window.SyntheticPersonas`), and a game-embed `postMessage` bridge. Open
+`persona-lab/index.html`, or use the live page:
+https://claude.ai/artifact/VAogVdZo3JPmsTgTFgjBvv
+
 ## Running the code
 
 Prototypes 2 and 3 are self-contained Python (numpy + matplotlib); each has its
