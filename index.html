@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wicked Problem Prototypes — QuestSim</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --ink: #1b2330;
+    --ink-soft: #566075;
+    --ink-faint: #8a93a6;
+    --line: #e4e8ef;
+    --brand: #2f6fb0;
+    --brand-soft: #eaf2fb;
+    --good: #2e8b64;
+    --good-soft: #e7f4ee;
+    --amber: #d98c2b;
+    --amber-soft: #fbf1e3;
+    --purple: #8a5cd0;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 20px 80px; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 30px;
+  }
+  .logo {
+    width: 34px; height: 34px; border-radius: 9px; flex: none;
+    background: linear-gradient(135deg, #2f6fb0, #5aa0e0);
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 17px;
+  }
+  .topbar .name { font-weight: 700; font-size: 15px; }
+  .topbar .name span { color: var(--ink-faint); font-weight: 500; }
+  .topbar .repo { margin-left: auto; font-size: 13px; }
+
+  .hero { margin-bottom: 14px; }
+  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--brand); font-weight: 700; margin-bottom: 10px; }
+  h1 { font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 14px; max-width: 20ch; }
+  .lede { font-size: 16px; color: var(--ink-soft); max-width: 72ch; }
+  .lede b { color: var(--ink); }
+
+  .board-q {
+    margin: 22px 0 30px; padding: 16px 20px; background: var(--surface);
+    border: 1px solid var(--line); border-left: 4px solid var(--brand);
+    border-radius: var(--radius-sm); font-size: 17px; font-weight: 600; color: var(--ink);
+  }
+
+  /* Two-stream strip */
+  .streams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch;
+    margin-bottom: 36px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden; }
+  .stream { padding: 16px 20px; }
+  .stream h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .stream.classroom h3 { color: var(--good); }
+  .stream.engineering h3 { color: var(--amber); }
+  .stream p { font-size: 13.5px; color: var(--ink-soft); }
+  .divider { width: 0; border-left: 2px dashed #d64c4c; position: relative; }
+  .divider span { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(90deg);
+    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #d64c4c; white-space: nowrap; background: var(--surface); padding: 3px 6px; }
+
+  .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-faint); font-weight: 700; margin-bottom: 14px; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .16s, transform .16s; }
+  .card:hover { box-shadow: 0 10px 30px rgba(27,35,48,.08); transform: translateY(-2px); }
+  .thumb { height: 150px; background: #eef2f7; border-bottom: 1px solid var(--line);
+    overflow: hidden; position: relative; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .thumb .num { position: absolute; top: 10px; left: 10px; width: 26px; height: 26px; border-radius: 7px;
+    background: rgba(15,32,51,.9); color: #fff; font-weight: 800; font-size: 14px;
+    display: grid; place-items: center; }
+  .card-body { padding: 16px 17px 18px; display: flex; flex-direction: column; flex: 1; }
+  .reframes { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700;
+    margin-bottom: 6px; }
+  .card.p1 .reframes { color: var(--brand); }
+  .card.p2 .reframes { color: var(--amber); }
+  .card.p3 .reframes { color: var(--purple); }
+  .card h2 { font-size: 18px; letter-spacing: -0.01em; margin-bottom: 7px; }
+  .card p.desc { font-size: 13.5px; color: var(--ink-soft); flex: 1; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    margin-top: 12px; align-self: flex-start; }
+  .badge.html { background: var(--brand-soft); color: var(--brand); }
+  .badge.py { background: var(--good-soft); color: var(--good); }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .btn { font-size: 13px; font-weight: 600; padding: 8px 13px; border-radius: 8px;
+    border: 1px solid var(--line); }
+  .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn.primary:hover { background: #255a92; text-decoration: none; }
+  .btn.ghost { background: #fff; color: var(--ink-soft); }
+  .btn.ghost:hover { border-color: #c2cede; text-decoration: none; color: var(--ink); }
+
+  .relate { margin-top: 36px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px 22px; }
+  .relate h3 { font-size: 16px; margin-bottom: 10px; }
+  .relate ul { list-style: none; display: grid; gap: 9px; }
+  .relate li { position: relative; padding-left: 22px; font-size: 14px; color: var(--ink-soft); }
+  .relate li::before { content: "→"; position: absolute; left: 0; color: var(--brand); font-weight: 700; }
+  .relate li b { color: var(--ink); }
+
+  footer { margin-top: 32px; font-size: 12.5px; color: var(--ink-faint); text-align: center; line-height: 1.7; }
+
+  @media (max-width: 820px) {
+    .cards { grid-template-columns: 1fr; }
+    .streams { grid-template-columns: 1fr; }
+    .divider { width: auto; height: 0; border-left: 0; border-top: 2px dashed #d64c4c; }
+    .divider span { transform: translate(-50%,-50%); }
+    h1 { font-size: 25px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo">Q</div>
+    <div class="name">QuestSim <span>· Wicked Problem Prototypes</span></div>
+    <a class="repo" href="https://github.com/lin564/synthetic-student">View on GitHub ↗</a>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Personalization without the data districts can't defend</div>
+    <h1>Three prototypes for one wicked problem</h1>
+    <p class="lede">
+      QuestSim's adaptive engine (<b>ACE</b>) gets better the more fine-grained the data it sees.
+      COPPA, FERPA, and the districts that enforce them push the other way. Solving for
+      personalization makes the privacy problem harder; solving for privacy degrades
+      personalization — so there's no optimum, only a position each district sets.
+    </p>
+  </div>
+
+  <div class="board-q">
+    How might we personalize learning without collecting the data districts can't defend?
+  </div>
+
+  <div class="streams">
+    <div class="stream classroom">
+      <h3>Classroom stream</h3>
+      <p>What <i>this child</i> did today. Written into the district's own Google Workspace,
+         owned by the district, never stored by QuestSim.</p>
+    </div>
+    <div class="divider"><span>never crossed</span></div>
+    <div class="stream engineering">
+      <h3>Engineering stream</h3>
+      <p>How children <i>in general</i> behave. Synthetic or de-identified aggregates only —
+         never an individual record.</p>
+    </div>
+  </div>
+
+  <div class="section-label">The three prototypes — one per place a district's objection can land</div>
+
+  <div class="cards">
+
+    <div class="card p1">
+      <div class="thumb"><span class="num">1</span>
+        <img src="prototype-1-data-diet-toggle/preview.png" alt="Data Diet Toggle screen">
+      </div>
+      <div class="card-body">
+        <div class="reframes">Reframes the policy surface</div>
+        <h2>Data Diet Toggle</h2>
+        <p class="desc">A clickable admin-console mock: the district picks how much the classroom
+          stream collects — Full, Standard, or Minimal — with tradeoffs in plain language and
+          QuestSim's share fixed at nothing.</p>
+        <span class="badge html">Clickable HTML mock</span>
+        <div class="actions">
+          <a class="btn primary" href="prototype-1-data-diet-toggle/index.html">Open the mock</a>
+          <a class="btn ghost" href="prototype-1-data-diet-toggle/README.md">README</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p2">
+      <div class="thumb"><span class="num">2</span>
+        <img src="prototype-2-mastery-only-export/figures/01_divergence_summary.png" alt="Divergence summary">
+      </div>
+      <div class="card-body">
+        <div class="reframes">Reframes the architecture</div>
+        <h2>Mastery-Only Export</h2>
+        <p class="desc">A replay harness proving ACE can adapt on-device and export only a mastery
+          vector. ~99% of adaptation decisions survive; it names the two signals that carry the
+          residual.</p>
+        <span class="badge py">Runnable Python harness</span>
+        <div class="actions">
+          <a class="btn primary" href="prototype-2-mastery-only-export/output/report.html">View results</a>
+          <a class="btn ghost" href="prototype-2-mastery-only-export/README.md">README</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p3">
+      <div class="thumb"><span class="num">3</span>
+        <img src="prototype-3-synthetic-student-tuning/figures/04_within_range.png" alt="Within-range validation">
+      </div>
+      <div class="card-body">
+        <div class="reframes">Reframes where the data comes from</div>
+        <h2>Synthetic Student Tuning</h2>
+        <p class="desc">A simulation harness that develops and calibrates ACE on ~200 synthetic
+          middle schoolers, so real student data is needed only for low-volume aggregate
+          validation — never for model development.</p>
+        <span class="badge py">Runnable Python harness</span>
+        <div class="actions">
+          <a class="btn primary" href="prototype-3-synthetic-student-tuning/output/report.html">View results</a>
+          <a class="btn ghost" href="prototype-3-synthetic-student-tuning/README.md">README</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="relate">
+    <h3>How they interlock</h3>
+    <ul>
+      <li><b>Prototype 1</b> makes the narrowing a product feature a privacy officer can sign
+        against without calling counsel.</li>
+      <li><b>Prototype 2</b> shows ~99% of ACE's decisions survive moving on-device — and the
+        residual falls on exactly the two signals (response latency, hint timing) that
+        <b>Prototype 1's</b> Standard and Minimal levels drop.</li>
+      <li><b>Prototype 3</b> answers <i>if QuestSim never gets student data, how does the product
+        get better?</i> — and can supply the synthetic logged sessions <b>Prototype 2</b> replays.</li>
+    </ul>
+  </div>
+
+  <footer>
+    From “Wicked Problem Prototypes: Personalization Without the Data Districts Can’t Defend”
+    (Linda Bernard, Nov 2026).<br>
+    Parameters grounded in Bayesian Knowledge Tracing, the power law of practice, help-seeking and
+    memory-decay research. No real student data is used anywhere in this repository.
+  </footer>
+
+</div>
+</body>
+</html>
