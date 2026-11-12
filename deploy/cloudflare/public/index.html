@@ -332,12 +332,16 @@
       <div class="card card-pad">
         <h3>Game under test</h3>
         <div class="ctrl">
-          <label>Source</label>
-          <div class="seg" role="group" style="margin-bottom:8px;">
-            <button id="src-demo" aria-pressed="true">Demo game</button>
-            <button id="src-url" aria-pressed="false">Your URL</button>
-          </div>
-          <input type="url" id="game-url" placeholder="https://your-game.example/play" hidden>
+          <label for="game-source">Game under test</label>
+          <select id="game-source">
+            <option value="demo">Demo game — Number Climb (built-in)</option>
+            <option value="ace">QuestSim · Pythagoras Quest (ACE)</option>
+            <option value="odyssey">QuestSim · Odyssey</option>
+            <option value="berlin">QuestSim · StoryQuest: Berlin Wall</option>
+            <option value="url">Custom URL…</option>
+          </select>
+          <input type="url" id="game-url" placeholder="https://your-game.example/play" hidden style="margin-top:8px;">
+          <div id="game-adapter-note" class="muted" style="margin-top:7px;"></div>
         </div>
         <div class="ctrl">
           <label for="embed-players">Players (from current population) <b id="embed-players-v">60</b></label>
@@ -348,12 +352,12 @@
           <b>Protocol.</b> The game receives <code class="inl">persona-test:init</code> with its players, then for each item it
           posts <code class="inl">persona-test:item</code> <code class="inl">{playerId, item:{guess,slip,learn}}</code> and the
           lab replies <code class="inl">persona-test:response</code> <code class="inl">{correct, latencyMs, usedHint}</code>.
-          The game posts <code class="inl">persona-test:result</code> <code class="inl">{playerId, mastery}</code> per player.
-          A real game drops in a ~15-line adapter; the demo implements it in full.
+          The game posts <code class="inl">persona-test:result</code> per player. A game only runs if it includes the
+          adapter and allows being framed; otherwise it just loads for viewing.
         </div>
       </div>
       <div style="min-width:0;">
-        <iframe class="game" id="game-frame" title="Game under test" sandbox="allow-scripts"></iframe>
+        <iframe class="game" id="game-frame" title="Game under test" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
         <div class="tiles" id="embed-tiles" style="margin:14px 0;"></div>
         <div class="card card-pad">
           <h3>Live from the game</h3>
@@ -885,17 +889,31 @@ const DEMO_GAME = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   <\/script></body></html>`;
 
 let embedPlayers = [], embedStates = {}, embedResults = [];
+const GAMES = {
+  demo:    { demo: true, adapter: true },
+  ace:     { url: "https://questsim-ace-rebuild.pages.dev/", adapter: true },
+  odyssey: { url: "https://odyssey.questsim.com/", adapter: false },
+  berlin:  { url: "https://storyquest.berlinwall-demo.questsim.com/", adapter: false },
+  url:     { custom: true, adapter: false },
+};
 function setGameSrc(which) {
-  $("#src-demo").setAttribute("aria-pressed", which === "demo");
-  $("#src-url").setAttribute("aria-pressed", which === "url");
-  $("#game-url").hidden = which !== "url";
+  const g = GAMES[which] || GAMES.demo;
+  $("#game-url").hidden = !g.custom;
   const frame = $("#game-frame");
-  if (which === "demo") { frame.removeAttribute("src"); frame.srcdoc = DEMO_GAME; }
-  else { const u = $("#game-url").value.trim(); frame.removeAttribute("srcdoc"); if (u) frame.src = u; }
+  if (g.demo) { frame.removeAttribute("src"); frame.srcdoc = DEMO_GAME; }
+  else {
+    frame.removeAttribute("srcdoc");
+    const u = g.custom ? $("#game-url").value.trim() : g.url;
+    if (u) frame.src = u; else frame.removeAttribute("src");
+  }
+  const note = $("#game-adapter-note");
+  if (g.adapter && !g.demo) note.innerHTML = '<span style="color:var(--good);">✓ Includes the persona-test adapter — “Run players” will drive it.</span>';
+  else if (g.demo) note.innerHTML = 'Built-in demo that implements the adapter in full.';
+  else if (g.custom) note.innerHTML = 'Loads your URL. It runs only if it includes the adapter and allows being framed.';
+  else note.innerHTML = '<span style="color:var(--warn);">Loads for viewing. This game needs the adapter added before players can run against it.</span>';
 }
-$("#src-demo").addEventListener("click", () => setGameSrc("demo"));
-$("#src-url").addEventListener("click", () => setGameSrc("url"));
-$("#game-url").addEventListener("change", () => { if ($("#src-url").getAttribute("aria-pressed") === "true") setGameSrc("url"); });
+$("#game-source").addEventListener("change", e => setGameSrc(e.target.value));
+$("#game-url").addEventListener("change", () => { if ($("#game-source").value === "url") setGameSrc("url"); });
 $("#embed-players").addEventListener("input", e => { $("#embed-players-v").textContent = e.target.value; });
 
 function embedLog(t) { const el = $("#embed-log"); el.textContent += "\n" + t; el.scrollTop = el.scrollHeight; }
@@ -919,17 +937,32 @@ window.addEventListener("message", e => {
 });
 function renderEmbedTiles() {
   if (!embedResults.length) return;
-  const ms = embedResults.map(r => r.mastery);
-  const mean = ms.reduce((a, b) => a + b, 0) / ms.length;
-  const passed = ms.filter(m => m >= SyntheticPersonas.MASTERY).length;
-  const lv = embedResults.map(r => r.level || 0);
-  const avgL = lv.reduce((a, b) => a + b, 0) / lv.length;
-  $("#embed-tiles").innerHTML = [
-    ["Players", embedResults.length],
-    ["Mean mastery", fmt(mean)],
-    ["Reached mastery", pct(passed / embedResults.length)],
-    ["Avg level", fmt(avgL, 1)],
-  ].map(([k, v]) => `<div class="tile"><div class="v tnum">${v}</div><div class="k">${k}</div></div>`).join("");
+  const n = embedResults.length;
+  const mean = embedResults.reduce((a, r) => a + (r.mastery || 0), 0) / n;
+  const gameFields = embedResults.some(r => ("tier" in r) || ("scaffolded" in r) || ("reachedMastery" in r));
+  let tiles;
+  if (gameFields) {
+    const reached = embedResults.filter(r => r.reachedMastery || r.tier === "mastery").length;
+    const scaf = embedResults.filter(r => r.scaffolded).length;
+    const fast = embedResults.filter(r => r.fastTracked).length;
+    tiles = [
+      ["Players", n],
+      ["Reached Mastery tier", pct(reached / n)],
+      ["Scaffolded", pct(scaf / n)],
+      ["Fast-tracked", pct(fast / n)],
+      ["Mean progress", fmt(mean)],
+    ];
+  } else {
+    const passed = embedResults.filter(r => (r.mastery || 0) >= SyntheticPersonas.MASTERY).length;
+    const avgL = embedResults.reduce((a, r) => a + (r.level || 0), 0) / n;
+    tiles = [
+      ["Players", n],
+      ["Mean mastery", fmt(mean)],
+      ["Reached mastery", pct(passed / n)],
+      ["Avg level", fmt(avgL, 1)],
+    ];
+  }
+  $("#embed-tiles").innerHTML = tiles.map(([k, v]) => `<div class="tile"><div class="v tnum">${v}</div><div class="k">${k}</div></div>`).join("");
 }
 $("#run-embed").addEventListener("click", () => {
   const frame = $("#game-frame");
