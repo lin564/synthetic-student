@@ -1,0 +1,14 @@
+{
+  "name": "questsim-synthetic-students",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Workers static deployment of the Synthetic Persona Lab",
+  "scripts": {
+    "sync": "cp ../../persona-lab/index.html public/index.html",
+    "dev": "npm run sync && wrangler dev",
+    "deploy": "npm run sync && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  // Cloudflare Workers — static-assets ("assets-only") deployment of the
+  // Synthetic Persona Lab. No Worker script: the single page is served as a
+  // static asset. Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "questsim-synthetic-students",
+  "compatibility_date": "2026-11-12",
+  "assets": {
+    "directory": "./public"
+  }
+}
