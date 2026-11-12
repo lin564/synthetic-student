@@ -1,5 +1,5 @@
 {
-  "name": "questsim-synthetic-students",
+  "name": "questsim-persyna",
   "version": "1.0.0",
   "private": true,
   "description": "Cloudflare Workers static deployment of the Synthetic Persona Lab",

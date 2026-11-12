@@ -1,11 +1,18 @@
 {
   // Cloudflare Workers — static-assets ("assets-only") deployment of the
-  // Synthetic Persona Lab. No Worker script: the single page is served as a
-  // static asset. Docs: https://developers.cloudflare.com/workers/static-assets/
+  // Synthetic Persona Lab, served at https://questsim.persyna.com
+  // No Worker script: the single page is served as a static asset.
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "questsim-synthetic-students",
+  "name": "questsim-persyna",
   "compatibility_date": "2026-11-12",
   "assets": {
     "directory": "./public"
-  }
+  },
+  // Custom domain. persyna.com must be an active zone on this Cloudflare
+  // account; Cloudflare creates the DNS record + certificate automatically.
+  // To use the apex instead, change the pattern to "persyna.com".
+  "routes": [
+    { "pattern": "questsim.persyna.com", "custom_domain": true }
+  ]
 }
